@@ -2328,7 +2328,10 @@ async function cloudPull(force = false) {
       cloudPush();
       return;
     }
-    // If cloud userData has no actual content (wiped by undo/accident), push local instead
+    // Safety: count items in cloud vs local. If cloud has significantly fewer
+    // items than local (>10 item gap), always prefer local — a sparse cloud
+    // update (e.g. from a test script or single voice-add) must never wipe
+    // a full local dataset. Only skip this check when force=true (manual pull).
     const ud = cloud.userData || {};
     const cloudIsEmpty = (
       !(ud.events?.length) &&
@@ -2339,6 +2342,21 @@ async function cloudPull(force = false) {
     ) && !Object.keys(cloud.checks || {}).length;
     if (cloudIsEmpty && !force) {
       cloudStatus('Cloud is empty — pushing local data');
+      cloudPush();
+      return;
+    }
+    // Count total items in cloud vs local
+    const countItems = (u: any) => {
+      if (!u) return 0;
+      return (u.events?.length || 0) +
+        Object.values(u.categories || {}).reduce((s: number, a: any) => s + (a?.length || 0), 0) +
+        (u.notes?.length || 0);
+    };
+    const cloudCount = countItems(ud);
+    const localCount = countItems(userData);
+    if (!force && localCount > cloudCount + 10) {
+      // Local is much richer than cloud — push local, don't overwrite
+      cloudStatus(`Local has more data (${localCount} vs ${cloudCount}) — pushing local`);
       cloudPush();
       return;
     }
