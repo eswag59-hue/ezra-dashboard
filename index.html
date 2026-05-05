@@ -709,6 +709,10 @@
         <label>Your WhatsApp number
           <input type="tel" id="setting-whatsapp" placeholder="+15551234567">
         </label>
+        <label>Your Twilio voice number
+          <input type="tel" id="setting-voice-number" placeholder="+15551234567">
+          <span style="font-size:11px; color:var(--text-muted); display:block; margin-top:3px;">The number Twilio calls you from. Get one at twilio.com/console.</span>
+        </label>
       </div>
       <div id="cloud-status" style="font-size:12px; color: var(--text-muted); margin: 8px 0 12px;">Not configured</div>
       <div class="digest-buttons">
@@ -720,7 +724,8 @@
         <button id="btn-iphone-link">Copy iPhone setup link</button>
       </div>
       <div class="digest-disabled-msg" style="margin-top: 10px;">
-        Set up Twilio Sandbox + Supabase first (see README). All edits sync automatically when configured.
+        <strong>WhatsApp:</strong> Text the Twilio sandbox number to add tasks. &nbsp;
+        <strong>Voice:</strong> Call your Twilio number — say what to add or ask questions. Twilio calls you at 7am and 30 min before events.
       </div>
     </div>
   </details>
@@ -2333,16 +2338,19 @@ async function testCloudConnection() {
 const settingBackend = $('#setting-backend');
 const settingToken = $('#setting-token');
 const settingWhatsapp = $('#setting-whatsapp');
+const settingVoiceNumber = $('#setting-voice-number');
 settingBackend.value = settings.backend || '';
 settingToken.value = settings.token || '';
 settingWhatsapp.value = settings.whatsapp || '';
-[settingBackend, settingToken, settingWhatsapp].forEach(inp => {
+settingVoiceNumber.value = settings.voiceNumber || '';
+[settingBackend, settingToken, settingWhatsapp, settingVoiceNumber].forEach(inp => {
   inp.addEventListener('input', () => {
     settings = {
       ...settings,
       backend: settingBackend.value.trim(),
       token: settingToken.value.trim(),
       whatsapp: settingWhatsapp.value.trim(),
+      voiceNumber: settingVoiceNumber.value.trim(),
     };
     save(KEY_SETTINGS, settings);
   });
