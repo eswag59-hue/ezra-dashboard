@@ -722,7 +722,10 @@
       </div>
       <div class="digest-buttons" style="margin-top:8px;">
         <button id="btn-iphone-link">Copy iPhone setup link</button>
+        <button id="btn-export-data">Export backup JSON</button>
       </div>
+      <div style="margin-top:12px; font-size:12px; color:var(--text-muted); font-weight:600; letter-spacing:.05em; text-transform:uppercase;">Local backups (auto-saved before each sync)</div>
+      <div id="backup-slots" style="margin-top:6px; display:flex; flex-direction:column; gap:6px;"></div>
       <div class="digest-disabled-msg" style="margin-top: 10px;">
         <strong>WhatsApp:</strong> Text the Twilio sandbox number to add tasks. &nbsp;
         <strong>Voice:</strong> Call your Twilio number — say what to add or ask questions. Twilio calls you at 7am and 30 min before events.
@@ -2311,71 +2314,164 @@ function migrateUserData(ud) {
   });
 }
 
+// ─── DATA SAFETY LAYER ──────────────────────────────────────────────────────
+
+// Count total user items (events + tasks + notes)
+function countItems(u) {
+  if (!u) return 0;
+  return (u.events?.length || 0) +
+    Object.values(u.categories || {}).reduce((s, a) => s + (a?.length || 0), 0) +
+    (u.notes?.length || 0);
+}
+
+// Save a snapshot to a 3-slot rotating backup ring in localStorage.
+// Called automatically before every cloud pull.
+function saveLocalBackup() {
+  try {
+    const snap = JSON.stringify({
+      userData, checks,
+      ts: new Date().toISOString(),
+      count: countItems(userData),
+    });
+    const b2 = localStorage.getItem('ezra-dash-bak-2');
+    const b1 = localStorage.getItem('ezra-dash-bak-1');
+    if (b1) localStorage.setItem('ezra-dash-bak-2', b1);
+    if (b2) localStorage.setItem('ezra-dash-bak-3', b2);
+    localStorage.setItem('ezra-dash-bak-1', snap);
+  } catch(e) { console.warn('saveLocalBackup failed', e); }
+}
+
+// Merge cloud data into local state.
+// ONLY adds items from cloud that are not already in local.
+// Local items are NEVER removed (except via cloud tombstones in deleted[]).
+// Returns true if anything changed.
+function mergeCloudIntoLocal(cloud) {
+  const cloudUd = cloud.userData || {};
+  let changed = false;
+
+  // Build set of all local item IDs
+  const localIds = new Set();
+  (userData.events || []).forEach(e => localIds.add(e.id));
+  Object.values(userData.categories || {}).forEach(arr => arr.forEach(t => localIds.add(t.id)));
+  (userData.notes || []).forEach(n => localIds.add(n.id));
+  (userData.recurringEvents || []).forEach(r => localIds.add(r.id));
+
+  const allDeleted = new Set([...(userData.deleted || []), ...(cloudUd.deleted || [])]);
+
+  // Add cloud events not present locally
+  for (const e of (cloudUd.events || [])) {
+    if (!localIds.has(e.id) && !allDeleted.has(e.id)) {
+      userData.events.push(e); localIds.add(e.id); changed = true;
+    }
+  }
+  // Add cloud category tasks not present locally
+  for (const [cat, items] of Object.entries(cloudUd.categories || {})) {
+    userData.categories[cat] = userData.categories[cat] || [];
+    for (const item of items) {
+      if (!localIds.has(item.id) && !allDeleted.has(item.id)) {
+        userData.categories[cat].push(item); localIds.add(item.id); changed = true;
+      }
+    }
+  }
+  // Add cloud notes not present locally
+  for (const n of (cloudUd.notes || [])) {
+    if (!localIds.has(n.id) && !allDeleted.has(n.id)) {
+      userData.notes.push(n); localIds.add(n.id); changed = true;
+    }
+  }
+  // Add cloud recurring events not present locally
+  for (const r of (cloudUd.recurringEvents || [])) {
+    if (!localIds.has(r.id) && !allDeleted.has(r.id)) {
+      userData.recurringEvents.push(r); localIds.add(r.id); changed = true;
+    }
+  }
+  // Apply cloud tombstones — items deleted via phone/voice are removed locally
+  for (const id of (cloudUd.deleted || [])) {
+    if (!userData.deleted.includes(id)) {
+      userData.deleted.push(id);
+      userData.events = userData.events.filter(e => e.id !== id);
+      for (const cat of Object.keys(userData.categories))
+        userData.categories[cat] = userData.categories[cat].filter(t => t.id !== id);
+      userData.notes = userData.notes.filter(n => n.id !== id);
+      userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== id);
+      changed = true;
+    }
+  }
+  // Merge cloud check-states for items not yet checked locally
+  for (const [id, val] of Object.entries(cloud.checks || {})) {
+    if (!(id in checks)) { checks[id] = val; changed = true; }
+  }
+  // Rebuild datedTasks from categories (deduplicated)
+  const seenDated = new Set((userData.datedTasks || []).map(dt => dt.id));
+  for (const items of Object.values(userData.categories)) {
+    for (const item of items) {
+      if (item.date && !seenDated.has(item.id)) {
+        userData.datedTasks.push({ id: item.id, date: item.date, text: item.text });
+        seenDated.add(item.id);
+      }
+    }
+  }
+  return changed;
+}
+
+// Export all data as a JSON file download
+function exportData() {
+  const blob = new Blob([JSON.stringify({ userData, checks, exported: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), {
+    href: url, download: `ezra-dashboard-${new Date().toISOString().split('T')[0]}.json`,
+  });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Restore from one of the 3 local backup slots (slot = 1, 2, or 3)
+function restoreLocalBackup(slot) {
+  const raw = localStorage.getItem(`ezra-dash-bak-${slot}`);
+  if (!raw) { cloudStatus(`No backup in slot ${slot}`); return; }
+  try {
+    const snap = JSON.parse(raw);
+    saveLocalBackup(); // save current state as newest backup before restoring
+    userData = snap.userData; checks = snap.checks || {};
+    migrateUserData(userData);
+    save(KEY_USER, userData); save(KEY_CHECKS, checks);
+    render();
+    cloudStatus(`Restored backup from ${new Date(snap.ts).toLocaleString()} (${snap.count} items)`);
+    cloudPush();
+  } catch(e) { cloudStatus(`Restore failed: ${e.message}`); }
+}
+
 async function cloudPull(force = false) {
   if (!settings.backend || !settings.token) return;
-  cloudStatus('Loading from cloud...');
+  cloudStatus('Syncing with cloud...');
   try {
     const resp = await fetch(`${cloudUrl()}/sync`, {
       headers: { 'Authorization': `Bearer ${settings.token}` },
     });
-    if (!resp.ok) {
-      cloudStatus(`Pull failed: ${resp.status} ${resp.statusText}`);
-      return;
-    }
+    if (!resp.ok) { cloudStatus(`Pull failed: ${resp.status} ${resp.statusText}`); return; }
     const cloud = await resp.json();
     if (!cloud || !cloud.updated_at) {
-      cloudStatus('Cloud is empty — pushing local data');
-      cloudPush();
-      return;
+      cloudStatus('Cloud is empty — pushing local data'); cloudPush(); return;
     }
-    // Safety: count items in cloud vs local. If cloud has significantly fewer
-    // items than local (>10 item gap), always prefer local — a sparse cloud
-    // update (e.g. from a test script or single voice-add) must never wipe
-    // a full local dataset. Only skip this check when force=true (manual pull).
-    const ud = cloud.userData || {};
-    const cloudIsEmpty = (
-      !(ud.events?.length) &&
-      !(ud.datedTasks?.length) &&
-      !(ud.deleted?.length) &&
-      !(ud.recurringEvents?.length) &&
-      !Object.values(ud.categories || {}).some(a => (a as unknown[]).length > 0)
-    ) && !Object.keys(cloud.checks || {}).length;
-    if (cloudIsEmpty && !force) {
-      cloudStatus('Cloud is empty — pushing local data');
-      cloudPush();
-      return;
-    }
-    // Count total items in cloud vs local
-    const countItems = (u: any) => {
-      if (!u) return 0;
-      return (u.events?.length || 0) +
-        Object.values(u.categories || {}).reduce((s: number, a: any) => s + (a?.length || 0), 0) +
-        (u.notes?.length || 0);
-    };
-    const cloudCount = countItems(ud);
-    const localCount = countItems(userData);
-    if (!force && localCount > cloudCount + 10) {
-      // Local is much richer than cloud — push local, don't overwrite
-      cloudStatus(`Local has more data (${localCount} vs ${cloudCount}) — pushing local`);
-      cloudPush();
-      return;
-    }
-    if (force || !lastLocalUpdate || cloud.updated_at > lastLocalUpdate) {
-      if (cloud.userData) {
-        userData = cloud.userData;
-        migrateUserData(userData);
-      }
+    // Always save a local backup before touching anything
+    saveLocalBackup();
+    if (force) {
+      // Manual force-pull: full overwrite (user explicitly requested)
+      if (cloud.userData) { userData = cloud.userData; migrateUserData(userData); }
       if (cloud.checks) checks = cloud.checks;
-      lastLocalUpdate = cloud.updated_at;
-      localStorage.setItem(KEY_USER, JSON.stringify(userData));
-      localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
-      localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
-      render();
-      cloudStatus(`Loaded from cloud (${new Date(cloud.updated_at).toLocaleString()})`);
     } else {
-      cloudStatus('Local is current — pushing pending changes');
-      cloudPush();
+      // Normal sync: safe merge — adds cloud items, never removes local ones
+      mergeCloudIntoLocal(cloud);
+      migrateUserData(userData);
     }
+    lastLocalUpdate = new Date().toISOString();
+    localStorage.setItem(KEY_USER, JSON.stringify(userData));
+    localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
+    localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
+    render();
+    const n = countItems(userData);
+    cloudStatus(`Synced — ${n} item${n !== 1 ? 's' : ''}`);
+    if (!force) cloudPush(); // push merged result so cloud is canonical
   } catch (e) {
     cloudStatus(`Offline (pull): ${e.message}`);
   }
@@ -2442,6 +2538,38 @@ $('#btn-refresh').addEventListener('click', async () => {
 $('#btn-test-connection').addEventListener('click', testCloudConnection);
 $('#btn-sync-now').addEventListener('click', cloudPush);
 $('#btn-pull-now').addEventListener('click', () => cloudPull(true));
+$('#btn-export-data').addEventListener('click', exportData);
+
+// Render the 3 local backup slots in the settings panel
+function renderBackupSlots() {
+  const container = $('#backup-slots');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let slot = 1; slot <= 3; slot++) {
+    const raw = localStorage.getItem(`ezra-dash-bak-${slot}`);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;';
+    if (!raw) {
+      row.innerHTML = `<span style="color:var(--text-muted)">Slot ${slot}: empty</span>`;
+    } else {
+      try {
+        const snap = JSON.parse(raw);
+        const dt = new Date(snap.ts).toLocaleString();
+        const btn = document.createElement('button');
+        btn.textContent = 'Restore';
+        btn.style.cssText = 'font-size:11px;padding:2px 8px;';
+        btn.addEventListener('click', () => restoreLocalBackup(slot));
+        row.appendChild(btn);
+        row.appendChild(Object.assign(document.createElement('span'), {
+          textContent: `Slot ${slot}: ${dt} — ${snap.count} items`,
+          style: 'color:var(--text-muted)',
+        }));
+      } catch { row.innerHTML = `<span style="color:var(--text-muted)">Slot ${slot}: corrupt</span>`; }
+    }
+    container.appendChild(row);
+  }
+}
+renderBackupSlots();
 
 // Auto-configure from URL params (used for iPhone one-tap setup link)
 (function() {
@@ -2511,18 +2639,21 @@ async function cloudPollSilent() {
     });
     if (!resp.ok) return;
     const cloud = await resp.json();
-    if (cloud?.updated_at && (!lastLocalUpdate || cloud.updated_at > lastLocalUpdate)) {
-      if (cloud.userData) {
-        userData = cloud.userData;
-        migrateUserData(userData);
-      }
-      if (cloud.checks) checks = cloud.checks;
-      lastLocalUpdate = cloud.updated_at;
+    if (!cloud?.updated_at) return;
+    // Only merge if cloud was updated more recently than our last push
+    if (lastLocalUpdate && cloud.updated_at <= lastLocalUpdate) return;
+    // Safe merge — never overwrites local items
+    saveLocalBackup();
+    const changed = mergeCloudIntoLocal(cloud);
+    if (changed) {
+      migrateUserData(userData);
+      lastLocalUpdate = new Date().toISOString();
       localStorage.setItem(KEY_USER, JSON.stringify(userData));
       localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
       localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
       render();
       cloudStatus(`Auto-synced at ${new Date().toLocaleTimeString()}`);
+      cloudPush();
     }
   } catch { /* silent fail — offline */ }
 }
