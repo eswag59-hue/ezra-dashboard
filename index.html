@@ -1291,11 +1291,12 @@ function openModal(item, kind, cat = null) {
     addField('Category', cat_select);
     if (modalState.cat) cat_select.value = modalState.cat;
     const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: item.note || '' }), { placeholder: 'Optional' }));
-    const urgent_chk = el('input', { type: 'checkbox' });
+    const urgent_chk = el('input', { type: 'checkbox', id: 'modal-urgent' });
     if (item.urgent) urgent_chk.checked = true;
-    const urgWrap = el('label', { style: 'display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);font-weight:400;cursor:pointer;' },
-      urgent_chk, document.createTextNode('Mark as urgent'));
-    f.appendChild(el('div', { class: 'field' }, urgWrap));
+    const urgRow = el('div', { style: 'display:flex;align-items:center;gap:8px;padding:6px 0 2px;' });
+    urgRow.appendChild(urgent_chk);
+    urgRow.appendChild(el('label', { for: 'modal-urgent', style: 'font-size:13px;color:var(--text);font-weight:400;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;' }, 'Mark as urgent'));
+    f.appendChild(urgRow);
     modalState.fields = { i_text, i_due, cat_select, i_note, urgent_chk };
   } else if (kind === 'event') {
     if (item.isRecurring) {
@@ -1366,10 +1367,11 @@ function openModal(item, kind, cat = null) {
     addField('Category', cat_select);
     cat_select.value = 'Personal';
     const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: '' }), { placeholder: 'Optional' }));
-    const urgent_chk = el('input', { type: 'checkbox' });
-    const urgWrap = el('label', { style: 'display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);font-weight:400;cursor:pointer;' },
-      urgent_chk, document.createTextNode('Mark as urgent'));
-    f.appendChild(el('div', { class: 'field' }, urgWrap));
+    const urgent_chk = el('input', { type: 'checkbox', id: 'modal-urgent' });
+    const urgRow = el('div', { style: 'display:flex;align-items:center;gap:8px;padding:6px 0 2px;' });
+    urgRow.appendChild(urgent_chk);
+    urgRow.appendChild(el('label', { for: 'modal-urgent', style: 'font-size:13px;color:var(--text);font-weight:400;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;' }, 'Mark as urgent'));
+    f.appendChild(urgRow);
     modalState.fields = { i_text, i_due, cat_select, i_note, urgent_chk };
     $('#modal-title').textContent = 'New task';
   } else if (kind === 'newEvent') {
