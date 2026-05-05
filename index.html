@@ -1279,21 +1279,20 @@ function openModal(item, kind, cat = null) {
   };
 
   if (kind === 'task') {
-    const i_text = addField('Text', el('input', { type: 'text', value: item.text }));
-    const i_due = addField('Due (free text — e.g. TODAY, TONIGHT, Fri May 8)', el('input', { type: 'text', value: item.due || '' }));
+    const i_text = addField('Task', el('input', { type: 'text', value: item.text }));
+    const i_due = addField('Due', Object.assign(el('input', { type: 'text', value: item.due || '' }), { placeholder: 'TODAY · TONIGHT · Fri May 8' }));
     const cat_select = el('select', {});
     Object.keys(defaultData.categories).forEach(c => {
       cat_select.appendChild(el('option', { value: c }, c));
     });
     addField('Category', cat_select);
     if (modalState.cat) cat_select.value = modalState.cat;
-    const i_note = addField('Sub-note (optional)', el('input', { type: 'text', value: item.note || '' }));
+    const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: item.note || '' }), { placeholder: 'Optional' }));
     const urgent_chk = el('input', { type: 'checkbox' });
     if (item.urgent) urgent_chk.checked = true;
-    const urgWrap = el('label', { style: 'display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);font-weight:400' },
-      urgent_chk, document.createTextNode(' Mark as urgent (red)'));
-    const uw = el('div', { class: 'field' }, urgWrap);
-    f.appendChild(uw);
+    const urgWrap = el('label', { style: 'display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);font-weight:400;cursor:pointer;' },
+      urgent_chk, document.createTextNode('Mark as urgent'));
+    f.appendChild(el('div', { class: 'field' }, urgWrap));
     modalState.fields = { i_text, i_due, cat_select, i_note, urgent_chk };
   } else if (kind === 'event') {
     if (item.isRecurring) {
@@ -1319,7 +1318,7 @@ function openModal(item, kind, cat = null) {
       daysWrap.appendChild(el('label', {}, 'Repeats on'));
       daysWrap.appendChild(dayRow2);
       f.appendChild(daysWrap);
-      const i_note = addField('Note (optional)', el('input', { type: 'text', value: rule ? (rule.note || '') : '' }));
+      const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: rule ? (rule.note || '') : '' }), { placeholder: 'Optional' }));
       f.appendChild(el('div', { style: 'font-size:12px;color:var(--text-muted);margin-top:4px;' }, 'Editing affects all future occurrences of this event.'));
       modalState.fields = { i_title, i_time, i_note, dayChecks, isRecurringEdit: true, recurringId: item.recurringId };
       $('#modal-title').textContent = 'Edit recurring event';
@@ -1337,7 +1336,7 @@ function openModal(item, kind, cat = null) {
       dateRow.appendChild(dateField);
       dateRow.appendChild(timeField);
       f.appendChild(dateRow);
-      const i_note = addField('Note (optional)', el('input', { type: 'text', value: item.note || '' }));
+      const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: item.note || '' }), { placeholder: 'Optional' }));
       modalState.fields = { i_title, i_date, i_time, i_note };
     }
   } else if (kind === 'datedTask') {
@@ -1355,18 +1354,18 @@ function openModal(item, kind, cat = null) {
     modalState.fields = { i_title, i_body };
     $('#modal-title').textContent = 'New note';
   } else if (kind === 'newTask') {
-    const i_text = addField('Text', el('input', { type: 'text', value: '', placeholder: 'What needs to be done?' }));
-    const i_due = addField('Due (optional, e.g. TODAY, TONIGHT, Fri May 8)', el('input', { type: 'text', value: '' }));
+    const i_text = addField('Task', el('input', { type: 'text', value: '', placeholder: 'What needs to be done?' }));
+    const i_due = addField('Due', Object.assign(el('input', { type: 'text', value: '' }), { placeholder: 'TODAY · TONIGHT · Fri May 8' }));
     const cat_select = el('select', {});
     Object.keys(defaultData.categories).forEach(c => {
       cat_select.appendChild(el('option', { value: c }, c));
     });
     addField('Category', cat_select);
     cat_select.value = 'Personal';
-    const i_note = addField('Sub-note (optional)', el('input', { type: 'text', value: '' }));
+    const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: '' }), { placeholder: 'Optional' }));
     const urgent_chk = el('input', { type: 'checkbox' });
-    const urgWrap = el('label', { style: 'display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);font-weight:400' },
-      urgent_chk, document.createTextNode(' Mark as urgent (red)'));
+    const urgWrap = el('label', { style: 'display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);font-weight:400;cursor:pointer;' },
+      urgent_chk, document.createTextNode('Mark as urgent'));
     f.appendChild(el('div', { class: 'field' }, urgWrap));
     modalState.fields = { i_text, i_due, cat_select, i_note, urgent_chk };
     $('#modal-title').textContent = 'New task';
@@ -1452,6 +1451,11 @@ function openModal(item, kind, cat = null) {
 function closeModal() {
   modalBackdrop.classList.remove('open');
   modalState = null;
+  // Reset delete button armed state
+  const delBtn = $('#modal-delete');
+  delete delBtn.dataset.armed;
+  delBtn.textContent = 'Delete';
+  delBtn.removeAttribute('style');
 }
 
 function saveModal() {
@@ -1599,11 +1603,30 @@ function saveModal() {
 
 function deleteFromModal() {
   if (!modalState) return;
+  const btn = $('#modal-delete');
+
+  // First click: arm the button — show confirmation state
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = '1';
+    btn.textContent = 'Confirm delete';
+    btn.style.cssText = 'background:var(--urgent);color:#fff;border-color:var(--urgent);';
+    // Auto-disarm after 3 seconds if not confirmed
+    setTimeout(() => {
+      if (btn.dataset.armed) {
+        delete btn.dataset.armed;
+        btn.textContent = 'Delete';
+        btn.removeAttribute('style');
+      }
+    }, 3000);
+    return;
+  }
+
+  // Second click: confirmed — actually delete
+  delete btn.dataset.armed;
   const { item, kind } = modalState;
   const f = modalState.fields;
-  // Recurring event — delete the whole series
+
   if (kind === 'event' && f && f.isRecurringEdit) {
-    if (!confirm('Delete this recurring event and all its occurrences?')) return;
     userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== f.recurringId);
     save(KEY_USER, userData);
     closeModal();
@@ -1611,7 +1634,6 @@ function deleteFromModal() {
     showToast('Recurring event deleted');
     return;
   }
-  if (!confirm(`Delete this ${kind}?`)) return;
   performDelete(item.id, kind);
   closeModal();
 }
@@ -1732,17 +1754,16 @@ function renderTask(t, opts={}) {
     else openModal(t, 'task', cat);
   });
   const delBtn = el('button', { class: 'icon-btn delete', title: 'Delete' }, '×');
-  delBtn.addEventListener('click', () => {
+  delBtn.addEventListener('click', e => {
+    e.stopPropagation();
     const orig = opts.original || t;
     if (orig.isRecurring) {
-      if (confirm('Delete this recurring event and all its occurrences?')) {
-        userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== orig.recurringId);
-        save(KEY_USER, userData);
-        render();
-        showToast('Recurring event deleted');
-      }
+      userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== orig.recurringId);
+      save(KEY_USER, userData);
+      render();
+      showToast('Recurring event deleted');
     } else {
-      if (confirm('Delete "' + t.text + '"?')) performDelete(t.id, opts.kind || 'task');
+      performDelete(t.id, opts.kind || 'task');
     }
   });
   actions.appendChild(editBtn);
@@ -1948,7 +1969,7 @@ function renderNotes() {
     const delNoteBtn = el('button', { class: 'icon-btn-light', title: 'Delete' }, '×');
     delNoteBtn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
-      if (confirm('Delete note "' + n.title + '"?')) performDelete(n.id, 'note');
+      performDelete(n.id, 'note');
     });
     acts.appendChild(delNoteBtn);
     sum.appendChild(acts);
@@ -2215,7 +2236,6 @@ $('#import-file').addEventListener('change', e => {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      if (!confirm('This will overwrite your current data. Continue?')) return;
       if (data.userData) { userData = data.userData; save(KEY_USER, userData); }
       if (data.checks) { checks = data.checks; save(KEY_CHECKS, checks); }
       if (data.settings) { settings = data.settings; save(KEY_SETTINGS, settings); }
@@ -2228,11 +2248,24 @@ $('#import-file').addEventListener('change', e => {
   reader.readAsText(file);
 });
 $('#reset-all').addEventListener('click', () => {
-  if (confirm('Reset everything — checkmarks, edits, deletions, additions? This cannot be undone.')) {
-    localStorage.removeItem(KEY_CHECKS);
-    localStorage.removeItem(KEY_USER);
-    location.reload();
+  const btn = $('#reset-all');
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = '1';
+    btn.textContent = 'Sure? Click again to reset';
+    btn.style.cssText = 'background:var(--urgent);color:#fff;border-color:var(--urgent);';
+    setTimeout(() => {
+      if (btn.dataset.armed) {
+        delete btn.dataset.armed;
+        btn.textContent = 'Reset everything';
+        btn.removeAttribute('style');
+      }
+    }, 3000);
+    return;
   }
+  delete btn.dataset.armed;
+  localStorage.removeItem(KEY_CHECKS);
+  localStorage.removeItem(KEY_USER);
+  location.reload();
 });
 
 // ============ CLOUD SYNC ============
