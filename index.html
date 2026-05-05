@@ -2242,7 +2242,7 @@ $('#btn-iphone-link').addEventListener('click', () => {
     cloudStatus('Enter backend URL and sync token first, then copy the link.');
     return;
   }
-  const base = 'https://wqexoipihbgygxqzesds.supabase.co/functions/v1/app';
+  const base = 'https://eswag59-hue.github.io/ezra-dashboard/';
   const url = base + '?backend=' + encodeURIComponent(settings.backend) + '&token=' + encodeURIComponent(settings.token);
   navigator.clipboard.writeText(url).then(() => {
     cloudStatus('iPhone link copied! Open it on your iPhone, then add to Home Screen.');
