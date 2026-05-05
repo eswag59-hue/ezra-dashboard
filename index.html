@@ -948,8 +948,11 @@ const save = (k, v) => {
   }
 };
 let lastLocalUpdate = (() => {
-  try { return JSON.parse(localStorage.getItem('ezra-dash-updated-at')) || new Date().toISOString(); }
-  catch { return new Date().toISOString(); }
+  try {
+    const v = localStorage.getItem('ezra-dash-updated-at');
+    return v ? JSON.parse(v) : null;
+  }
+  catch { return null; }
 })();
 
 let checks = load(KEY_CHECKS, {});
@@ -2261,6 +2264,15 @@ async function cloudPush() {
   }
 }
 
+function migrateUserData(ud) {
+  ['events','datedTasks','notes','deleted','recurringEvents'].forEach(k => {
+    if (!Array.isArray(ud[k])) ud[k] = [];
+  });
+  ['categories','edits','recategorized'].forEach(k => {
+    if (typeof ud[k] !== 'object' || ud[k] === null || Array.isArray(ud[k])) ud[k] = {};
+  });
+}
+
 async function cloudPull(force = false) {
   if (!settings.backend || !settings.token) return;
   cloudStatus('Loading from cloud...');
@@ -2278,8 +2290,11 @@ async function cloudPull(force = false) {
       cloudPush();
       return;
     }
-    if (force || cloud.updated_at > lastLocalUpdate) {
-      if (cloud.userData) userData = cloud.userData;
+    if (force || !lastLocalUpdate || cloud.updated_at > lastLocalUpdate) {
+      if (cloud.userData) {
+        userData = cloud.userData;
+        migrateUserData(userData);
+      }
       if (cloud.checks) checks = cloud.checks;
       lastLocalUpdate = cloud.updated_at;
       localStorage.setItem(KEY_USER, JSON.stringify(userData));
@@ -2423,8 +2438,11 @@ async function cloudPollSilent() {
     });
     if (!resp.ok) return;
     const cloud = await resp.json();
-    if (cloud?.updated_at && cloud.updated_at > lastLocalUpdate) {
-      if (cloud.userData) userData = cloud.userData;
+    if (cloud?.updated_at && (!lastLocalUpdate || cloud.updated_at > lastLocalUpdate)) {
+      if (cloud.userData) {
+        userData = cloud.userData;
+        migrateUserData(userData);
+      }
       if (cloud.checks) checks = cloud.checks;
       lastLocalUpdate = cloud.updated_at;
       localStorage.setItem(KEY_USER, JSON.stringify(userData));
