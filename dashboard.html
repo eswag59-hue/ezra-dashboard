@@ -1,0 +1,3160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<title>Dashboard — Ezra</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f3ec;
+    --surface: #ffffff;
+    --surface-soft: #fbf8f1;
+    --border: #e8e0d0;
+    --border-soft: #efe9dc;
+    --text: #1c1c1c;
+    --text-muted: #6b6760;
+    --text-dim: #a59f93;
+    --accent: #1e2735;
+    --accent-soft: #475569;
+    --urgent: #a8413a;
+    --urgent-bg: #f8e9e1;
+    --urgent-border: #d29d8e;
+    --note-bg: #edf0eb;
+    --note-border: #d2d8cc;
+    --note-accent: #2d4a3e;
+    --user-mark: #c98948;
+    --modal-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.06);
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 32px 28px 80px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  header .title {
+    font-size: 26px; font-weight: 700;
+    letter-spacing: -0.025em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent-soft) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header .date { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+  header .progress { font-size: 12px; color: var(--text-dim); }
+  header .meta { display: flex; align-items: center; gap: 8px; }
+
+  h2 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  /* === Quick add === */
+  .quick-add {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 28px;
+  }
+  .quick-add textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+  }
+  .quick-add textarea::placeholder { color: var(--text-dim); }
+  .qa-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .qa-preview { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 1; }
+  .qa-chip {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--surface-soft);
+    border: 1px solid var(--border-soft);
+    color: var(--text-muted);
+  }
+  .qa-chip.type { color: var(--accent); font-weight: 600; }
+  .qa-chip.urgent { color: var(--urgent); border-color: var(--urgent-border); }
+  .qa-chip select { border: none; background: transparent; font: inherit; color: inherit; cursor: pointer; padding: 0; outline: none; }
+  .qa-empty { font-size: 12px; color: var(--text-dim); font-style: italic; }
+  .qa-add {
+    background: var(--accent); color: var(--surface); border: none;
+    border-radius: 7px; padding: 8px 18px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .qa-add:hover { background: #2a3548; }
+  .qa-add:disabled { opacity: 0.4; cursor: not-allowed; }
+  .qa-hint { font-size: 11px; color: var(--text-dim); margin-top: 8px; line-height: 1.4; }
+  .qa-hint code { background: var(--surface-soft); padding: 1px 5px; border-radius: 3px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px; color: var(--text-muted); }
+
+  /* === Manual add panel === */
+  .add-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 18px;
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .add-panel .label {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); margin-right: 4px;
+  }
+  .add-btn {
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    padding: 7px 14px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--surface-soft); color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .add-btn:hover { border-color: var(--accent-soft); background: var(--surface); }
+  .add-btn:active { transform: scale(0.98); }
+
+  /* === Today === */
+  .today-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px 24px;
+    margin-bottom: 20px; border-left: 3px solid var(--urgent);
+  }
+  .today-panel .today-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .today-panel .today-title { font-size: 17px; font-weight: 600; }
+  .today-panel .today-count { font-size: 12px; color: var(--text-muted); }
+  .today-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 6px 24px; }
+
+  /* === Week strip === */
+  .week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
+  .day {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px; min-height: 110px; position: relative;
+  }
+  .day.today { border-color: var(--urgent-border); background: var(--urgent-bg); }
+  .day.clickable { cursor: pointer; transition: border-color 0.15s ease, transform 0.1s ease; }
+  .day.clickable:hover { border-color: var(--accent-soft); }
+  .day.clickable:active { transform: scale(0.99); }
+  .day .dow { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .day .dom { font-size: 22px; font-weight: 600; margin-top: 2px; margin-bottom: 8px; }
+  .day .ev {
+    font-size: 11px; color: var(--text); line-height: 1.3;
+    margin-bottom: 4px; padding-left: 6px;
+    border-left: 2px solid var(--accent);
+    position: relative;
+    cursor: pointer;
+  }
+  .day .ev:hover { background: rgba(0,0,0,0.02); border-radius: 0 4px 4px 0; }
+  .day .ev .ev-time { color: var(--text-muted); font-weight: 500; }
+  .day .ev.task-due { border-left-color: var(--text-dim); }
+  .day .ev.task-due .ev-time { color: var(--text-dim); font-style: italic; }
+  .day .ev.user::after {
+    content: ""; position: absolute; top: 0; right: -2px;
+    width: 4px; height: 4px; background: var(--user-mark); border-radius: 50%;
+  }
+
+  /* === Cal tabs + Today detail view === */
+  .cal-tabs { display: flex; gap: 2px; margin-bottom: 12px; }
+  .cal-tab {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: none; border: none;
+    padding: 5px 12px; cursor: pointer;
+    border-radius: 6px; font-family: inherit;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .cal-tab:hover { color: var(--text); }
+  .cal-tab.active { color: var(--accent); background: var(--surface); }
+  .today-view { margin-bottom: 20px; }
+  .today-detail {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--urgent);
+    border-radius: 10px;
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 28px;
+  }
+  .today-detail .left { text-align: center; padding-top: 4px; }
+  .today-detail .dow {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+  .today-detail .dom {
+    font-size: 68px; font-weight: 600;
+    line-height: 1; margin-top: 6px;
+    color: var(--accent); letter-spacing: -0.02em;
+  }
+  .today-detail .month {
+    font-size: 12px; color: var(--text-muted); margin-top: 8px;
+  }
+  .today-detail .today-tag {
+    display: inline-block; margin-top: 10px;
+    background: var(--urgent); color: var(--surface);
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 3px 9px; border-radius: 4px;
+  }
+  .today-detail .right {
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .today-detail .section h4 {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-muted); margin-bottom: 8px;
+  }
+  .today-detail .ev {
+    font-size: 13px; line-height: 1.4;
+    padding: 6px 0 6px 12px;
+    border-left: 2px solid var(--accent);
+    margin-bottom: 3px;
+    cursor: pointer;
+    border-radius: 0 4px 4px 0;
+  }
+  .today-detail .ev:hover { background: var(--surface-soft); }
+  .today-detail .ev .ev-time {
+    font-size: 10.5px; color: var(--text-muted); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px;
+  }
+  .today-detail .ev.task-due { border-left-color: var(--text-dim); }
+  .today-detail .ev.task-due .ev-time { color: var(--text-dim); font-style: italic; }
+  .today-detail .ev.urgent-task { border-left-color: var(--urgent); }
+  .today-detail .ev.urgent-task .ev-time { color: var(--urgent); }
+  .today-detail .ev.done {
+    opacity: 0.45; text-decoration: line-through;
+    border-left-color: var(--text-dim);
+  }
+  .today-detail .empty {
+    color: var(--text-dim); font-size: 13px;
+    padding: 10px 0; font-style: italic;
+  }
+  @media (max-width: 700px) {
+    .today-detail { grid-template-columns: 1fr; gap: 16px; }
+    .today-detail .left { text-align: left; }
+    .today-detail .dom { font-size: 52px; }
+  }
+
+  /* === Flexible chips === */
+  .flex-events { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .flex-events .chip {
+    background: var(--surface); border: 1px dashed var(--border);
+    border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--text-muted);
+  }
+  .flex-events .chip strong { color: var(--text); }
+
+  /* === Tasks grid === */
+  .columns { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; }
+  @media (max-width: 980px) { .columns { grid-template-columns: 1fr; } }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-content: start; }
+  @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .card h3 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--accent); margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .card h3 .count { font-size: 11px; font-weight: 500; color: var(--text-dim); letter-spacing: 0; text-transform: none; }
+
+  .task { display: flex; align-items: flex-start; gap: 10px; padding: 5px 0; font-size: 13px; position: relative; }
+  .task input[type="checkbox"] { margin-top: 4px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
+  .task .label-wrap { flex: 1; cursor: text; line-height: 1.45; min-width: 0; }
+  .task .label-wrap:hover .text-edit-hint { opacity: 1; }
+  .task.done .label-wrap { text-decoration: line-through; color: var(--text-dim); }
+  .task .due { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-left: 6px; white-space: nowrap; }
+  .task .due.urgent { color: var(--urgent); }
+  .task .note { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .task ul.subtasks { list-style: none; margin: 6px 0 0 0; padding: 0; }
+  .task ul.subtasks li { font-size: 12px; color: var(--text-muted); padding: 2px 0 2px 14px; position: relative; }
+  .task ul.subtasks li::before { content: "·"; position: absolute; left: 4px; color: var(--text-dim); }
+  .task .actions {
+    visibility: hidden; display: flex; gap: 2px; margin-top: 2px; flex-shrink: 0;
+  }
+  .task:hover .actions { visibility: visible; }
+  .task .icon-btn {
+    background: none; border: none; color: var(--text-dim); cursor: pointer;
+    padding: 2px 5px; line-height: 1; font-size: 12px; border-radius: 4px;
+    font-family: inherit;
+  }
+  .task .icon-btn:hover { color: var(--accent); background: var(--surface-soft); }
+  .task .icon-btn.delete:hover { color: var(--urgent); }
+  .task.user-added::before {
+    content: ""; position: absolute; left: -10px; top: 11px;
+    width: 4px; height: 4px; border-radius: 50%; background: var(--user-mark);
+  }
+  .task.edited::before {
+    content: ""; position: absolute; left: -10px; top: 11px;
+    width: 4px; height: 4px; border-radius: 50%; background: var(--note-accent);
+  }
+  .task .label-text[contenteditable="true"] {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: 2px;
+    border-radius: 3px;
+    background: var(--surface-soft);
+    padding: 1px 4px;
+    margin: -1px -4px;
+  }
+
+  /* === Notes side === */
+  .notes-side h2 { margin-top: 0; }
+  .note-card {
+    background: var(--note-bg); border: 1px solid var(--note-border);
+    border-radius: 10px; margin-bottom: 10px; overflow: hidden;
+  }
+  .note-card summary {
+    padding: 12px 16px; cursor: pointer; font-weight: 600;
+    font-size: 13px; color: var(--note-accent);
+    list-style: none; user-select: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .note-card summary::-webkit-details-marker { display: none; }
+  .note-card .summary-actions { display: flex; gap: 4px; align-items: center; }
+  .note-card .summary-text { flex: 1; }
+  .note-card summary::after { content: "+"; font-size: 16px; color: var(--text-muted); font-weight: 400; margin-left: 8px; }
+  .note-card[open] summary::after { content: "−"; }
+  .note-card .body {
+    padding: 12px 16px 14px; font-size: 13px; line-height: 1.6;
+    color: var(--text); border-top: 1px solid var(--note-border);
+    cursor: text;
+  }
+  .note-card .body:hover { background: rgba(255,255,255,0.4); }
+  .note-card .body ul { padding-left: 18px; margin: 6px 0; }
+  .note-card .body p { margin: 8px 0; }
+  .note-card .body strong { color: var(--note-accent); }
+  .note-card.user-added summary::before {
+    content: ""; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--user-mark); margin-right: 8px;
+  }
+  .note-card.edited summary::before {
+    content: ""; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--note-accent); margin-right: 8px;
+  }
+  .note-card .icon-btn-light {
+    background: none; border: none; color: var(--text-dim);
+    cursor: pointer; padding: 2px 6px; font-size: 11px; border-radius: 3px;
+    font-family: inherit;
+  }
+  .note-card .icon-btn-light:hover { color: var(--note-accent); background: rgba(255,255,255,0.6); }
+
+  /* === Add note button === */
+  .add-note-btn {
+    width: 100%; padding: 10px;
+    background: transparent; border: 1px dashed var(--border);
+    border-radius: 10px; color: var(--text-muted); font-size: 12px;
+    cursor: pointer; font-family: inherit;
+  }
+  .add-note-btn:hover { background: var(--surface-soft); border-color: var(--accent-soft); color: var(--accent); }
+
+  /* === Digest === */
+  .digest-section { margin-top: 32px; }
+  .digest-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .digest-card summary {
+    padding: 16px 20px; cursor: pointer; font-weight: 600;
+    font-size: 13px; color: var(--accent);
+    list-style: none; user-select: none;
+    display: flex; justify-content: space-between; align-items: center;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .digest-card summary::-webkit-details-marker { display: none; }
+  .digest-card summary::after { content: "+"; font-size: 16px; font-weight: 400; color: var(--text-muted); text-transform: none; letter-spacing: 0; }
+  .digest-card[open] summary::after { content: "−"; }
+  .digest-body { padding: 0 20px 20px; border-top: 1px solid var(--border-soft); }
+  .digest-settings { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+  .digest-settings label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; flex: 1; min-width: 180px; }
+  .digest-settings input, .digest-settings select {
+    display: block; width: 100%; margin-top: 4px;
+    padding: 8px 10px; font: inherit; font-size: 13px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--surface-soft); color: var(--text); outline: none;
+  }
+  .digest-settings input:focus, .digest-settings select:focus { border-color: var(--accent-soft); background: var(--surface); }
+  .digest-preview {
+    background: var(--surface-soft); border: 1px solid var(--border-soft);
+    border-radius: 8px; padding: 16px 18px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12.5px; line-height: 1.6;
+    color: var(--text); white-space: pre-wrap; margin-bottom: 14px;
+  }
+  .digest-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .digest-buttons a, .digest-buttons button {
+    display: inline-flex; align-items: center; padding: 8px 14px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--surface); color: var(--text);
+    font-size: 12px; font-weight: 500;
+    text-decoration: none; cursor: pointer; font-family: inherit;
+  }
+  .digest-buttons a:hover, .digest-buttons button:hover { background: var(--surface-soft); border-color: var(--accent-soft); }
+  .digest-buttons .primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .digest-buttons .primary:hover { background: #2a3548; border-color: #2a3548; }
+  .digest-disabled-msg { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
+
+  /* === Modal === */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35); z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 12px;
+    padding: 24px 26px; min-width: 380px; max-width: 520px; width: 100%;
+    box-shadow: var(--modal-shadow);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 18px; color: var(--accent); }
+  .modal .field { margin-bottom: 14px; }
+  .modal .field label {
+    display: block; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-muted); margin-bottom: 5px;
+  }
+  .modal .field input, .modal .field select, .modal .field textarea {
+    width: 100%; padding: 9px 11px; font: inherit; font-size: 13px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--surface-soft); color: var(--text); outline: none;
+    font-family: inherit;
+  }
+  .modal .field textarea { resize: vertical; min-height: 100px; line-height: 1.5; font-family: inherit; }
+  .modal .field input:focus, .modal .field select:focus, .modal .field textarea:focus {
+    border-color: var(--accent-soft); background: var(--surface);
+  }
+  .modal .field-row { display: flex; gap: 10px; }
+  .modal .field-row .field { flex: 1; }
+  .modal-buttons {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-soft);
+  }
+  .modal-buttons button {
+    padding: 8px 16px; border: 1px solid var(--border);
+    border-radius: 7px; background: var(--surface); color: var(--text);
+    font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+  }
+  .modal-buttons button:hover { background: var(--surface-soft); }
+  .modal-buttons button.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .modal-buttons button.primary:hover { background: #2a3548; }
+  .modal-buttons button.danger { color: var(--urgent); border-color: var(--urgent); margin-right: auto; }
+  .modal-buttons button.danger:hover { background: var(--urgent-bg); }
+
+  /* === Toast === */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--accent); color: var(--surface);
+    padding: 12px 18px; border-radius: 10px;
+    font-size: 13px; box-shadow: var(--modal-shadow);
+    display: flex; align-items: center; gap: 14px;
+    z-index: 200; transition: transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast button {
+    background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--surface);
+    border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit;
+  }
+  .toast button:hover { background: rgba(255,255,255,0.1); }
+
+  footer {
+    margin-top: 36px; padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--text-dim);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer button {
+    background: none; border: 1px solid var(--border); color: var(--text-muted);
+    border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  footer button:hover { background: var(--surface); }
+  footer .legend { display: inline-flex; align-items: center; gap: 6px; }
+  footer .legend-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--user-mark); }
+  footer .legend-dot.edited-dot { background: var(--note-accent); }
+
+  /* ============================================================
+     MOBILE — ≤ 520px
+     ============================================================ */
+  @media (max-width: 520px) {
+    /* Body */
+    body { padding: 16px 14px 80px; }
+
+    /* Header */
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+    }
+    header .meta { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+    header .title { font-size: 22px; }
+    header .date { font-size: 13px; }
+    #btn-refresh { padding: 6px 14px; font-size: 13px; }
+
+    /* Quick add */
+    .quick-add { padding: 14px 14px; margin-bottom: 16px; }
+    .quick-add textarea { font-size: 16px; } /* 16px prevents iOS zoom */
+    .qa-hint { display: none; } /* hide keyboard hint on mobile */
+    .qa-add { padding: 10px 20px; font-size: 14px; min-height: 44px; }
+
+    /* Add panel — stretch buttons */
+    .add-panel { padding: 10px 14px; margin-bottom: 16px; gap: 8px; }
+    .add-btn { flex: 1; text-align: center; padding: 10px 8px; font-size: 13px; min-height: 44px; }
+
+    /* Today panel */
+    .today-panel { padding: 16px 14px; margin-bottom: 16px; }
+    .today-panel .today-title { font-size: 15px; }
+    .today-grid { grid-template-columns: 1fr; gap: 4px; }
+
+    /* Task rows — always show actions on touch, bigger targets */
+    .task { padding: 8px 0; }
+    .task .actions { visibility: visible; }
+    .task input[type="checkbox"] {
+      width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;
+    }
+    .task .icon-btn { padding: 5px 8px; font-size: 14px; }
+
+    /* Week strip — horizontal scroll */
+    .week-strip {
+      display: flex;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      gap: 8px;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+    }
+    .day {
+      min-width: 92px;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+      min-height: 90px;
+      padding: 10px;
+    }
+    .day .dom { font-size: 20px; margin-bottom: 6px; }
+    .day .ev { font-size: 10px; }
+
+    /* Cal tabs */
+    .cal-tabs { gap: 4px; margin-bottom: 10px; }
+    .cal-tab { font-size: 11px; padding: 7px 14px; min-height: 36px; }
+
+    /* Today detail */
+    .today-detail { padding: 16px; }
+    .today-detail .dom { font-size: 48px; }
+
+    /* Flex chips */
+    .flex-events { margin-bottom: 16px; }
+
+    /* Columns — already 1-col at 980px, just reduce gap */
+    .columns { gap: 16px; }
+
+    /* Cards — single col on phone */
+    .cards { grid-template-columns: 1fr; gap: 12px; }
+    .card { padding: 14px 14px; }
+
+    /* Notes */
+    .note-card summary { padding: 12px 14px; font-size: 14px; }
+    .note-card .body { padding: 10px 14px 12px; }
+
+    /* Digest section */
+    .digest-section { margin-top: 20px; }
+    .digest-settings label { min-width: 100%; }
+
+    /* Footer */
+    footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 14px;
+    }
+
+    /* Modal — bottom sheet */
+    .modal-backdrop {
+      align-items: flex-end;
+      padding: 0;
+    }
+    .modal {
+      border-radius: 20px 20px 0 0;
+      min-width: unset;
+      width: 100%;
+      max-width: 100%;
+      max-height: 88vh;
+      padding: 20px 18px 32px;
+    }
+    .modal-buttons button { min-height: 44px; font-size: 14px; }
+    .modal .field input,
+    .modal .field select,
+    .modal .field textarea {
+      font-size: 16px; /* prevent iOS zoom on focus */
+      padding: 12px 11px;
+      min-height: 44px;
+    }
+    .modal .field textarea { min-height: 80px; font-size: 16px; }
+
+    /* Toast */
+    .toast {
+      left: 14px; right: 14px;
+      transform: translateY(100px);
+      width: auto;
+    }
+    .toast.show { transform: translateY(0); }
+
+    /* Wedding countdown — compact mobile */
+    .wedding-countdown {
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+    }
+    .wedding-countdown .wc-label { font-size: 9px; letter-spacing: 0.1em; }
+    .wedding-countdown .wc-days  { font-size: 40px; }
+    .wedding-countdown .wc-sub   { font-size: 13px; }
+    .wedding-countdown .wc-icon  { font-size: 30px; }
+
+    /* Next Up — tighter mobile */
+    .next-up {
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    .next-up .nu-icon  { width: 38px; height: 38px; font-size: 20px; border-radius: 9px; }
+    .next-up .nu-title { font-size: 14px; }
+    .next-up .nu-badge { font-size: 12px; padding: 4px 10px; }
+
+    /* Search bar — 16px prevents iOS zoom, bigger hit target */
+    .search-bar { margin-bottom: 14px; }
+    .search-bar input {
+      font-size: 16px;
+      min-height: 44px;
+      padding: 10px 14px;
+    }
+
+    /* Section h2 labels — more breathing room */
+    h2 { margin-bottom: 10px; }
+
+    /* Card: reduce padding further so content fits */
+    .card { padding: 14px 12px; }
+
+    /* Progress label in header — smaller */
+    header .progress { font-size: 11px; }
+  }
+
+  /* === Card shadows (subtle depth) === */
+  .card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s ease;
+  }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08); }
+  .today-panel {
+    box-shadow: 0 2px 8px rgba(168,65,58,0.08), 0 4px 20px rgba(168,65,58,0.06);
+  }
+  .quick-add { box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05); }
+  .note-card { box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+
+  /* === Sync health badge === */
+  .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim);
+    display: inline-block; flex-shrink: 0; transition: background 0.3s;
+  }
+  .sync-dot.ok    { background: #22c55e; }
+  .sync-dot.busy  { background: #f59e0b; animation: pulse 1s infinite; }
+  .sync-dot.error { background: #ef4444; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* === Show-completed toggle === */
+  .toggle-done-btn {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 12px; font-size: 13px; color: var(--text-muted); cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .toggle-done-btn:hover { color: var(--text); border-color: var(--text-muted); }
+  body:not(.show-done) .task.done { display: none !important; }
+
+  /* === Search bar === */
+  .search-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 16px; padding: 0;
+  }
+  .search-bar input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text);
+    outline: none; transition: border-color .15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .search-bar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(30,39,53,0.08); }
+  .search-bar input::placeholder { color: var(--text-dim); }
+  .search-bar .clear-btn {
+    background: none; border: none; color: var(--text-dim); cursor: pointer;
+    font-size: 16px; padding: 4px 6px; border-radius: 4px; line-height: 1;
+    display: none;
+  }
+  .search-bar .clear-btn.visible { display: block; }
+  /* Tasks that don't match search are hidden */
+  .task[data-hidden-search] { display: none !important; }
+  /* Show "no results" label per card */
+  .card .search-empty {
+    font-size: 12px; color: var(--text-dim); font-style: italic; padding: 4px 0;
+    display: none;
+  }
+  .card.all-hidden .search-empty { display: block; }
+
+  /* === Wedding countdown banner === */
+  .wedding-countdown {
+    border-radius: 14px;
+    padding: 16px 22px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: linear-gradient(135deg, var(--accent) 0%, #2a3f5c 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(30,39,53,0.18);
+    position: relative;
+    overflow: hidden;
+  }
+  .wedding-countdown::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -20px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .wedding-countdown .wc-left {}
+  .wedding-countdown .wc-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.55;
+    margin-bottom: 4px;
+  }
+  .wedding-countdown .wc-days {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .wedding-countdown .wc-sub {
+    font-size: 12px;
+    opacity: 0.65;
+    margin-top: 4px;
+  }
+  .wedding-countdown .wc-icon {
+    font-size: 36px;
+    opacity: 0.3;
+    line-height: 1;
+    user-select: none;
+  }
+
+  /* === Next Up widget === */
+  .next-up {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 14px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+  }
+  .next-up:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.07); }
+  .next-up .nu-icon {
+    font-size: 22px; width: 40px; height: 40px;
+    background: var(--surface-soft); border: 1px solid var(--border-soft);
+    border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .next-up .nu-body { flex: 1; min-width: 0; }
+  .next-up .nu-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+  }
+  .next-up .nu-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .next-up .nu-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+  .next-up .nu-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: -0.01em;
+  }
+  .next-up .nu-badge.soon { background: var(--urgent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="title">Ezra's Dashboard</div>
+    <div class="date" id="header-date"></div>
+  </div>
+  <div class="meta">
+    <div id="progress" class="progress"></div>
+    <button id="toggle-done-btn" class="toggle-done-btn" title="Toggle completed tasks">Show done</button>
+    <button id="btn-refresh" title="Sync everything" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:13px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .15s,border-color .15s;">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="refresh-icon" style="display:inline-block;font-size:15px;line-height:1;">↻</span>
+      <span id="refresh-label">Sync</span>
+    </button>
+  </div>
+</header>
+
+<div id="wedding-countdown" class="wedding-countdown" style="display:none">
+  <div class="wc-left">
+    <div class="wc-label">💍 Wedding Countdown</div>
+    <div class="wc-days" id="wc-days">—</div>
+    <div class="wc-sub" id="wc-sub"></div>
+  </div>
+  <div class="wc-icon">💍</div>
+</div>
+
+<div class="quick-add">
+  <textarea id="qa-input" rows="2" placeholder="Add a task, event, or note... (try &quot;Call lighting Tuesday 3pm&quot; or &quot;Idea: ringo should support Spanish&quot;)"></textarea>
+  <div class="qa-bar">
+    <div class="qa-preview" id="qa-preview">
+      <span class="qa-empty">Type something — I'll route it to the right place.</span>
+    </div>
+    <button id="qa-add" class="qa-add" disabled>Add</button>
+  </div>
+  <div class="qa-hint">
+    Hints: prefix with <code>note:</code>, <code>idea:</code>, <code>todo:</code>, or <code>event:</code> to force type · words like <code>tonight</code>, <code>tomorrow</code>, <code>Friday</code>, <code>May 15</code>, <code>3pm</code> set the date/time · keywords <code>ringo</code>, <code>milton</code>, <code>aufruf</code>, <code>couch</code>, <code>kippah</code> set the category. Click any item below to edit it.
+  </div>
+</div>
+
+<div class="add-panel">
+  <span class="label">Add</span>
+  <button class="add-btn" data-add="task">+ Task</button>
+  <button class="add-btn" data-add="event">+ Event</button>
+  <button class="add-btn" data-add="note">+ Note</button>
+</div>
+
+<div id="next-up" class="next-up" style="display:none">
+  <div class="nu-icon" id="nu-icon">📅</div>
+  <div class="nu-body">
+    <div class="nu-label">⚡ Next Up</div>
+    <div class="nu-title" id="nu-title"></div>
+    <div class="nu-time" id="nu-time"></div>
+  </div>
+  <div class="nu-badge" id="nu-badge"></div>
+</div>
+
+<div class="search-bar">
+  <input id="search-input" type="search" placeholder="🔍 Search tasks, events, notes…" autocomplete="off">
+  <button class="clear-btn" id="clear-search">✕</button>
+</div>
+
+<div class="today-panel">
+  <div class="today-header">
+    <div class="today-title" id="today-title">Today</div>
+    <div class="today-count" id="today-count"></div>
+  </div>
+  <div class="today-grid" id="today-grid"></div>
+</div>
+
+<div class="cal-tabs">
+  <button class="cal-tab active" data-view="week">This week</button>
+  <button class="cal-tab" data-view="day">Today</button>
+</div>
+<div class="week-strip" id="week-strip"></div>
+<div class="today-view" id="today-view" style="display:none"></div>
+
+<div class="flex-events" id="flex-events"></div>
+
+<div class="columns">
+  <div>
+    <h2>Tasks by area</h2>
+    <div class="cards" id="cards"></div>
+  </div>
+  <div class="notes-side">
+    <h2>Reference notes</h2>
+    <div id="notes"></div>
+    <button class="add-note-btn" id="add-note-btn">+ Add a note</button>
+  </div>
+</div>
+
+<div class="digest-section">
+  <details class="digest-card" id="cloud-details">
+    <summary>Cloud sync &amp; WhatsApp</summary>
+    <div class="digest-body">
+      <div class="digest-settings">
+        <label>Backend URL
+          <input type="url" id="setting-backend" placeholder="https://xxx.supabase.co/functions/v1">
+        </label>
+        <label>Sync token
+          <input type="password" id="setting-token" placeholder="your shared secret">
+        </label>
+        <label>Your WhatsApp number
+          <input type="tel" id="setting-whatsapp" placeholder="+15551234567">
+        </label>
+        <label>Your Twilio voice number
+          <input type="tel" id="setting-voice-number" placeholder="+15551234567">
+          <span style="font-size:11px; color:var(--text-muted); display:block; margin-top:3px;">The number Twilio calls you from. Get one at twilio.com/console.</span>
+        </label>
+      </div>
+      <div id="cloud-status" style="font-size:12px; color: var(--text-muted); margin: 8px 0 12px;">Not configured</div>
+      <div class="digest-buttons">
+        <button id="btn-test-connection" class="primary">Test connection</button>
+        <button id="btn-sync-now">Push now</button>
+        <button id="btn-pull-now">Pull from cloud</button>
+      </div>
+      <div class="digest-buttons" style="margin-top:8px;">
+        <button id="btn-iphone-link">Copy iPhone setup link</button>
+        <button id="btn-export-data">Export backup JSON</button>
+      </div>
+      <div style="margin-top:12px; font-size:12px; color:var(--text-muted); font-weight:600; letter-spacing:.05em; text-transform:uppercase;">Local backups (auto-saved before each sync)</div>
+      <div id="backup-slots" style="margin-top:6px; display:flex; flex-direction:column; gap:6px;"></div>
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border-soft);">
+        <div style="font-size:12px; color:var(--text-muted); font-weight:600; letter-spacing:.05em; text-transform:uppercase; margin-bottom:8px;">Google Calendar</div>
+        <div id="gcal-status" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">Not connected</div>
+        <div class="digest-buttons">
+          <button id="btn-gcal-connect" class="primary">Connect Google Calendar</button>
+          <button id="btn-gcal-disconnect" style="display:none;">Disconnect</button>
+        </div>
+        <div style="margin-top:8px; font-size:12px; color:var(--text-dim);">Once connected, Google Calendar events appear in your dashboard and new events added via voice/text are synced back automatically. Apple Calendar syncs automatically if you have Google Calendar added to your iPhone.</div>
+      </div>
+      <div class="digest-disabled-msg" style="margin-top: 10px;">
+        <strong>WhatsApp:</strong> Text to add tasks — you can list multiple at once (e.g. "call noam, order flowers, meeting thursday 3pm"). &nbsp;
+        <strong>Voice:</strong> Call your Twilio number — rattle off everything you need. Events sync to Google Calendar automatically.
+      </div>
+    </div>
+  </details>
+  <details class="digest-card" id="digest-details">
+    <summary>Daily digest</summary>
+    <div class="digest-body">
+      <div class="digest-settings">
+        <label>Email
+          <input type="email" id="setting-email" placeholder="ezrabarish@gmail.com">
+        </label>
+        <label>Phone (digits only)
+          <input type="tel" id="setting-phone" placeholder="5551234567">
+        </label>
+        <label>Carrier (free email→SMS)
+          <select id="setting-carrier">
+            <option value="">— none —</option>
+            <option value="vtext.com">Verizon</option>
+            <option value="txt.att.net">AT&T</option>
+            <option value="tmomail.net">T-Mobile</option>
+            <option value="messaging.sprintpcs.com">Sprint</option>
+            <option value="myboostmobile.com">Boost</option>
+            <option value="vmobl.com">Virgin Mobile</option>
+          </select>
+        </label>
+      </div>
+      <div class="digest-preview" id="digest-preview"></div>
+      <div class="digest-buttons">
+        <a id="btn-email" class="primary" href="#">Email me</a>
+        <a id="btn-sms" href="#">Text me</a>
+        <button id="btn-copy">Copy</button>
+        <button id="btn-print">Print</button>
+      </div>
+      <div class="digest-disabled-msg" id="digest-msg"></div>
+    </div>
+  </details>
+</div>
+
+<footer>
+  <span>
+    <span class="legend"><span class="legend-dot"></span> added by you</span>
+    &nbsp;·&nbsp;
+    <span class="legend"><span class="legend-dot edited-dot"></span> edited</span>
+  </span>
+  <span>
+    <button id="export">Export data</button>
+    <button id="import">Import data</button>
+    <button id="reset-all">Reset everything</button>
+  </span>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal">
+    <h3 id="modal-title">Edit</h3>
+    <div id="modal-fields"></div>
+    <div class="modal-buttons">
+      <button class="danger" id="modal-delete">Delete</button>
+      <button id="modal-cancel">Cancel</button>
+      <button class="primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-text"></span>
+  <button id="toast-action">Undo</button>
+</div>
+
+<input type="file" id="import-file" accept=".json" style="display:none">
+
+<script>
+const TODAY = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+})();
+
+// ============ DEFAULT DATA ============
+const defaultData = {
+  events: [
+    { id: 'e1', date: '2026-05-04', time: '15:15', title: 'Legal Marriage appointment', note: 'Figure out the time to leave' },
+    { id: 'e2', date: '2026-05-04', time: '20:00', title: 'Chosson Central', note: '' },
+    { id: 'e3', date: '2026-05-07', time: '18:00', title: "Ben's wedding", note: 'Marina' },
+    { id: 'e4', date: '2026-05-11', time: '09:00', title: 'Dentist', note: 'Bring $350' },
+  ],
+  flexible: [],
+  datedTasks: [
+    { id: 'dt1', date: '2026-05-08', text: 'Home Goods couch pillows + bed pillows' },
+    { id: 'dt2', date: '2026-05-08', text: "Klaf's" },
+    { id: 'dt3', date: '2026-05-10', text: 'Write letters & wrap presents' },
+  ],
+  categories: {
+    'Wedding': [
+      { id: 'w1', text: "Prep whatever we need for the clerk's office", due: 'TONIGHT', urgent: true },
+      { id: 'w2', text: 'Text all friends that have Kibbudim', due: 'TODAY', urgent: true },
+      { id: 'w3', text: 'Fine line, procession card, white — finalize', due: 'TODAY', urgent: true },
+      { id: 'w4', text: 'Print halakhic prenup and sign', due: 'TODAY', urgent: true },
+      { id: 'w5', text: 'Follow up with place card lady', due: 'TODAY', urgent: true },
+      { id: 'w6', text: 'Lighting plan with Lori + take care of down payment', due: 'TODAY', urgent: true },
+      { id: 'w7', text: 'Decide and order couch', due: 'TODAY', urgent: true },
+      { id: 'w8', text: 'Geico', due: 'TODAY', urgent: true },
+      { id: 'w9', text: 'Verizon', due: 'TODAY', urgent: true },
+      { id: 'w10', text: 'PSE&G', due: 'TODAY', urgent: true },
+      { id: 'w11', text: 'Home Goods couch pillows + bed pillows', due: 'Fri May 8' },
+      { id: 'w12', text: 'Write the letters and wrap all presents', due: 'Sun May 10' },
+      { id: 'w13', text: 'Noah MC list' },
+      { id: 'w14', text: 'Dovi/Jack/Mechy/CJ/Eli — invite to wedding', note: 'Once 5 spots open' },
+      { id: 'w15', text: 'Text Abba list of all people for kibbudim' },
+      { id: 'w16', text: 'Bring 4 copies of legal to wedding' },
+    ],
+    'Aufruf': [
+      { id: 'a1', text: 'Have Abba talk to Roemer about davening times' },
+      { id: 'a2', text: 'Davening time sheet — finalize and print' },
+      { id: 'a3', text: 'Seating chart — make and print' },
+      { id: 'a4', text: 'Reach out to office guy in Roemer about choir' },
+      { id: 'a5', text: 'Write speeches; tell when everyone is speaking' },
+      { id: 'a6', text: 'Flowers for Shabbos Kallah', note: 'Peonies, hydrangeas, calla lilies — all white' },
+      { id: 'a7', text: 'Write a Shabbos Sheva Brachos speech as well' },
+      { id: 'a8', text: 'Go through every room in the house and collect all your stuff' },
+    ],
+    'Apartment': [
+      { id: 'ap1', text: 'Decide and order couch', due: 'TODAY', urgent: true },
+      { id: 'ap2', text: 'Home Goods couch pillows + bed pillows', due: 'Fri May 8' },
+      { id: 'ap3', text: "Klaf's", due: 'Fri May 8' },
+      { id: 'ap4', text: 'Bed skirts', note: 'Remind Kiki to order' },
+      { id: 'ap5', text: 'Dresser' },
+      { id: 'ap6', text: "Nightstands" },
+      { id: 'ap7', text: 'IKEA shelves', note: '$415' },
+    ],
+    'Work (Milton)': [
+      { id: 'mw1', text: 'Giveaway for Milton socials' },
+      { id: 'mw2', text: 'Make a long list of assignments for a VA',
+        subtasks: ['Flyer', 'Merch for that event', 'Social media highlights for those accounts', 'Edit all content for Ohio', 'Ohio logos', 'Florida logos'] },
+      { id: 'mw3', text: 'Write out full 3-month goals + to-do list',
+        subtasks: ['Get all socials up and moving', 'Merch in place', 'App up and running well', 'Alumni S.O.P.', 'Pro videography & photography for Ohio + Florida', 'Ohio website remodel', 'SEO and PPC'] },
+      { id: 'mw4', text: 'Flyers — Brooke / Gina order' },
+      { id: 'mw5', text: 'Price approval on the items' },
+      { id: 'mw6', text: 'App', note: 'Reference other Google Doc' },
+      { id: 'mw7', text: '11labs — AI video tool to try' },
+    ],
+    'Ringo.AI': [
+      { id: 'r1', text: 'Business plan' },
+      { id: 'r2', text: 'Update marketing materials' },
+      { id: 'r3', text: 'Work on dashboard' },
+      { id: 'r4', text: 'Work on website' },
+    ],
+    'Personal': [
+      { id: 'p1', text: 'New kippah for wedding' },
+      { id: 'p2', text: 'New tzitzis for wedding' },
+      { id: 'p3', text: 'Glass art piece to smash at wedding', note: 'Tell Benci' },
+      { id: 'p4', text: 'Save bouquet — turn into forever flowers' },
+    ],
+  },
+  notes: [
+    { id: 'n1', title: 'Aufruf speech notes', html: `
+      <ul>
+        <li>Something about Rav Hirschel's wife</li>
+        <li>Acknowledge people looking down — ones I got to meet and didn't get to: Saba, Laura Bubby, Bubby Linzer, Uncle Gary</li>
+        <li>Who's speaking when</li>
+      </ul>` },
+    { id: 'n2', title: 'Kibbudim and Tanaim', html: `
+      <p><strong>Misader:</strong> Rabbi Hoenig</p>
+      <p><strong>Aidei Kaddushin:</strong> Rabbi Nuebergeur / Rabbi Baum</p>
+      <ul>
+        <li>Rav Stien (my Shor Yashuva rebbe) — read kessubah?</li>
+        <li>Papa</li>
+        <li>Rav Moshe Tzvi — sign kessubah?</li>
+        <li>Her father's father</li>
+        <li>Her mother's mother</li>
+        <li>Rav Mordechai Linzer (MIR uncle)</li>
+        <li>Uncle Dov — read tanaim? (chovavavai)</li>
+        <li>Kovi & Ryan — sign my tanaim</li>
+        <li>Simcha & Zach — aidei yichud</li>
+      </ul>` },
+    { id: 'n3', title: 'Ringo.AI notes', html: `
+      <p>Owner-facing dashboard: pay for service + see all stats.</p>
+      <ul>
+        <li>Popular modifications</li>
+        <li>Top ordered items</li>
+        <li>Least ordered items</li>
+      </ul>
+      <p>Collect as much menu/order data as possible — for owner and us, to keep, learn from, and grow.</p>
+      <p><strong>Dashboard needs:</strong> add/edit menu, track calls, listen to calls, track money made, max data on calls.</p>
+      <p><strong>Talk to:</strong> Ezzie's Toast brand catalyst — explore using/working with them.</p>
+      <p><strong>Voice agent must:</strong></p>
+      <ul>
+        <li>Stop-and-go interrupting</li>
+        <li>Emphasize edits/repeats; review at end + customer confirmation</li>
+        <li>Allergy questions</li>
+        <li>Quote delivery / takeout times</li>
+        <li>Multi-language: Yiddish, French, English, Spanish, Hebrew</li>
+        <li>Customer wants real associate → ring actual phone</li>
+      </ul>` },
+    { id: 'n4', title: 'Social media giveaway', html: `
+      <p>Find one point person (a teammate) in each location. Run a <strong>$250 "follow all our socials" giveaway</strong>.</p>
+      <p><strong>Tiered:</strong></p>
+      <ul>
+        <li>Hit baseline → unlock prize</li>
+        <li>Exceed → prize increases (X → X+)</li>
+      </ul>
+      <p><strong>Entries:</strong></p>
+      <ul>
+        <li>Follow = 1 entry</li>
+        <li>Share = 2 entries</li>
+      </ul>
+      <p>Actively incentivize distribution and visibility.</p>` },
+  ],
+};
+
+// ============ STORAGE ============
+const KEY_CHECKS = 'ezra-dash-checks-v1';
+const KEY_USER = 'ezra-dash-user-v2';
+const KEY_SETTINGS = 'ezra-dash-settings-v1';
+
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } };
+const save = (k, v) => {
+  localStorage.setItem(k, JSON.stringify(v));
+  if (k === KEY_USER || k === KEY_CHECKS) {
+    lastLocalUpdate = new Date().toISOString();
+    localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
+    if (typeof cloudPushDebounced === 'function') cloudPushDebounced();
+  }
+};
+let lastLocalUpdate = (() => {
+  try {
+    const v = localStorage.getItem('ezra-dash-updated-at');
+    return v ? JSON.parse(v) : null;
+  }
+  catch { return null; }
+})();
+
+let checks = load(KEY_CHECKS, {});
+let userData = load(KEY_USER, {
+  events: [], datedTasks: [], categories: {}, notes: [],
+  edits: {}, deleted: [], recategorized: {},
+});
+// migrate older v1 schema if present
+const oldUser = load('ezra-dash-user-v1', null);
+if (oldUser && !localStorage.getItem(KEY_USER)) {
+  userData.events = oldUser.events || [];
+  userData.datedTasks = oldUser.datedTasks || [];
+  userData.categories = oldUser.categories || {};
+  userData.notes = oldUser.notes || [];
+  save(KEY_USER, userData);
+}
+
+const BACKEND_DEFAULT = 'https://wqexoipihbgygxqzesds.supabase.co/functions/v1';
+const TOKEN_DEFAULT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxZXhvaXBpaGJneWd4cXplc2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MDkzODAsImV4cCI6MjA5MzQ4NTM4MH0.iH-BHv8Itq_mhWq0xp71Xu5tB_1yB2Vq4D0_mO85fXo';
+let settings = load(KEY_SETTINGS, { email: '', phone: '', carrier: '', backend: BACKEND_DEFAULT, token: TOKEN_DEFAULT, whatsapp: '' });
+// Always ensure defaults are set even on existing installs
+if (!settings.backend) settings.backend = BACKEND_DEFAULT;
+if (!settings.token)   settings.token   = TOKEN_DEFAULT;
+
+// ensure all subkeys
+['events','datedTasks','notes','deleted','recurringEvents'].forEach(k => { if (!Array.isArray(userData[k])) userData[k] = []; });
+['categories','edits','recategorized'].forEach(k => { if (typeof userData[k] !== 'object' || userData[k] === null) userData[k] = {}; });
+
+// ============ DATA ACCESSORS WITH EDITS/DELETIONS ============
+function applyEdit(item) {
+  const e = userData.edits[item.id];
+  if (!e) return item;
+  return { ...item, ...e };
+}
+function isDeleted(id) { return userData.deleted.includes(id); }
+function isUserAdded(id) { return id.startsWith('u_'); }
+function isEdited(id) { return !!userData.edits[id] && !isUserAdded(id); }
+function getOrigCat(taskId) {
+  for (const [cat, tasks] of Object.entries(defaultData.categories)) {
+    if (tasks.some(t => t.id === taskId)) return cat;
+  }
+  return null;
+}
+
+function getData() {
+  // categories: defaults (filtered + edited + recategorized) + user-added
+  const cats = {};
+  for (const cat of Object.keys(defaultData.categories)) cats[cat] = [];
+
+  for (const [origCat, tasks] of Object.entries(defaultData.categories)) {
+    for (const t of tasks) {
+      if (isDeleted(t.id)) continue;
+      const targetCat = userData.recategorized[t.id] || origCat;
+      if (!cats[targetCat]) cats[targetCat] = [];
+      cats[targetCat].push(applyEdit(t));
+    }
+  }
+  for (const [cat, tasks] of Object.entries(userData.categories)) {
+    if (!cats[cat]) cats[cat] = [];
+    for (const t of tasks) {
+      if (isDeleted(t.id)) continue;
+      cats[cat].push(applyEdit(t));
+    }
+  }
+
+  const events = [
+    ...defaultData.events.filter(e => !isDeleted(e.id)).map(applyEdit),
+    ...userData.events.filter(e => !isDeleted(e.id)).map(applyEdit),
+    ...expandRecurringEvents(userData.recurringEvents || []),
+  ];
+  const datedTasks = [
+    ...defaultData.datedTasks.filter(t => !isDeleted(t.id)).map(applyEdit),
+    ...userData.datedTasks.filter(t => !isDeleted(t.id)).map(applyEdit),
+  ];
+  const notes = [
+    ...defaultData.notes.filter(n => !isDeleted(n.id)).map(applyEdit),
+    ...userData.notes.filter(n => !isDeleted(n.id)).map(applyEdit),
+  ];
+  return { events, datedTasks, categories: cats, notes };
+}
+
+// Expand recurring events into concrete dated occurrences (180-day window).
+function expandRecurringEvents(rules) {
+  const occurrences = [];
+  const winStart = new Date(todayD); winStart.setDate(winStart.getDate() - 7);
+  const winEnd   = new Date(todayD); winEnd.setDate(winEnd.getDate() + 180);
+  for (const rule of rules) {
+    if (isDeleted(rule.id)) continue;
+    const start = new Date(Math.max(new Date(rule.startDate + 'T12:00:00'), winStart));
+    const cur = new Date(start);
+    while (cur <= winEnd) {
+      if (rule.days.includes(cur.getDay())) {
+        const iso = cur.toISOString().split('T')[0];
+        occurrences.push({
+          id: rule.id + '_' + iso,
+          recurringId: rule.id,
+          title: rule.title,
+          date: iso,
+          time: rule.time,
+          note: rule.note || '',
+          isRecurring: true,
+        });
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+  return occurrences;
+}
+
+// ============ DOM HELPERS ============
+const $ = (s, r=document) => r.querySelector(s);
+const el = (tag, attrs={}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'html') n.innerHTML = v;
+    else if (k === 'on') for (const [ev, fn] of Object.entries(v)) n.addEventListener(ev, fn);
+    else n.setAttribute(k, v);
+  }
+  for (const k of kids) {
+    if (k == null) continue;
+    n.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
+  }
+  return n;
+};
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const stripHtml = html => { const d = document.createElement('div'); d.innerHTML = html; return d.innerText; };
+const textToHtml = txt => '<p>' + escapeHtml(txt).replace(/\n\n+/g,'</p><p>').replace(/\n/g,'<br>') + '</p>';
+
+// ============ DATE HELPERS ============
+const todayD = new Date(TODAY + 'T12:00:00');
+const fmtDow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const fmtDowLong = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const fmtMonth = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtMonthLong = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const fmtTime = t => {
+  if (!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const hh = h % 12 || 12;
+  return m === 0 ? `${hh}${ampm}` : `${hh}:${String(m).padStart(2,'0')}${ampm}`;
+};
+const fmtDate = iso => {
+  const d = new Date(iso + 'T12:00:00');
+  return `${fmtDow[d.getDay()]} ${fmtMonth[d.getMonth()]} ${d.getDate()}`;
+};
+const fmtDateLong = iso => {
+  const d = new Date(iso + 'T12:00:00');
+  return `${fmtDowLong[d.getDay()]}, ${fmtMonthLong[d.getMonth()]} ${d.getDate()}`;
+};
+function addDays(iso, n) {
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+$('#header-date').textContent = `${fmtDowLong[todayD.getDay()]}, ${fmtMonthLong[todayD.getMonth()]} ${todayD.getDate()}, ${todayD.getFullYear()}`;
+$('#today-title').textContent = `Today · ${fmtDowLong[todayD.getDay()]}, ${fmtMonthLong[todayD.getMonth()]} ${todayD.getDate()}`;
+
+// ============ PARSER ============
+const KEYWORDS = {
+  'Wedding': ['wedding','kibbudim','prenup','kessubah','ketubah','chosson','kallah','procession','marriage','clerk','geico','verizon','pse','utility','utilities','noah','mc','dovi','jack','mechy','cj','eli','abba','place card','halakhic','fine line'],
+  'Aufruf': ['aufruf','davening','shul','roemer','choir','speech','sheva brachos','shabbos kallah','peonies','hydrangeas','calla','flower','flowers','seating chart','tanaim','kessubah','kiddush'],
+  'Apartment': ['couch','pillow','pillows','bed','dresser','nightstand','nightstands','ikea','klaf','klafs','mezuzah','shelves','apartment','home goods','furniture','kiki','bed skirt'],
+  'Work (Milton)': ['milton','va','virtual assistant','ohio','florida','flyer','flyers','merch','alumni','seo','ppc','brooke','gina','11labs','three-month','goal','goals','content'],
+  'Ringo.AI': ['ringo','restaurant','voice agent','voice','call','calls','menu','toast','ezzie','allergy','allergies','catalyst','order','orders','associate'],
+  'Personal': ['kippah','tzitzis','bouquet','glass','smash','benci','dentist','doctor','haircut','gym','workout','run','errand'],
+};
+const escRE = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function normalizeQuotes(s) {
+  return s
+    .replace(/[‘’‚‛]/g, "'")
+    .replace(/[“”„‟]/g, '"');
+}
+
+function parseQuickAdd(input) {
+  let text = normalizeQuotes(input).trim();
+  if (!text) return null;
+  let type = 'task', date = null, time = null, urgent = false, forcedType = null;
+
+  const noteRe = /^(note|idea|thought|reminder)\s*:\s*/i;
+  const taskRe = /^(todo|task)\s*:\s*/i;
+  const eventRe = /^(event|meeting|appt|appointment)\s*:\s*/i;
+  if (noteRe.test(text)) { forcedType = 'note'; text = text.replace(noteRe, ''); }
+  else if (taskRe.test(text)) { forcedType = 'task'; text = text.replace(taskRe, ''); }
+  else if (eventRe.test(text)) { forcedType = 'event'; text = text.replace(eventRe, ''); }
+
+  const timeRes = [
+    { re: /\b(\d{1,2}):(\d{2})\s*(am|pm|a\.m\.|p\.m\.)\b/i, fn: m => {
+        let h = +m[1], mi = +m[2];
+        const isPM = /^p/i.test(m[3].replace(/\./g, ''));
+        if (isPM && h !== 12) h += 12;
+        if (!isPM && h === 12) h = 0;
+        return [h, mi];
+      } },
+    { re: /\b(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.)\b/i, fn: m => {
+        let h = +m[1];
+        const isPM = /^p/i.test(m[2].replace(/\./g, ''));
+        if (isPM && h !== 12) h += 12;
+        if (!isPM && h === 12) h = 0;
+        return [h, 0];
+      } },
+    { re: /\bnoon\b/i, fn: () => [12, 0] },
+    { re: /\bmidnight\b/i, fn: () => [0, 0] },
+  ];
+  for (const { re, fn } of timeRes) {
+    const m = text.match(re);
+    if (m) {
+      const [h, mi] = fn(m);
+      time = `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`;
+      text = text.replace(re, '').replace(/\s+/g,' ').trim();
+      break;
+    }
+  }
+
+  const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  if (/\btonight\b/i.test(text)) {
+    date = TODAY; if (!time) time = '20:00'; urgent = true;
+    text = text.replace(/\btonight\b/i,'').replace(/\s+/g,' ').trim();
+  } else if (/\btoday\b/i.test(text)) {
+    date = TODAY; urgent = true;
+    text = text.replace(/\btoday\b/i,'').replace(/\s+/g,' ').trim();
+  } else if (/\btomorrow\b/i.test(text)) {
+    const t = new Date(todayD); t.setDate(t.getDate()+1);
+    date = t.toISOString().split('T')[0];
+    text = text.replace(/\btomorrow\b/i,'').replace(/\s+/g,' ').trim();
+  } else {
+    let matched = false;
+    for (let i = 0; i < days.length; i++) {
+      const re = new RegExp(`\\b(?:next\\s+|this\\s+)?(${days[i]}|${days[i].slice(0,3)})\\b`, 'i');
+      const m = text.match(re);
+      if (m) {
+        const t = new Date(todayD);
+        let diff = (i - t.getDay() + 7) % 7;
+        if (diff === 0) diff = 7;
+        t.setDate(t.getDate() + diff);
+        date = t.toISOString().split('T')[0];
+        text = text.replace(re,'').replace(/\s+/g,' ').trim();
+        matched = true; break;
+      }
+    }
+    if (!matched) {
+      for (let i = 0; i < fmtMonthLong.length; i++) {
+        const re = new RegExp(`\\b(${fmtMonthLong[i]}|${fmtMonth[i]})\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'i');
+        const m = text.match(re);
+        if (m) {
+          const day = +m[2];
+          const t = new Date(todayD);
+          t.setMonth(i, day);
+          if (t < todayD) t.setFullYear(t.getFullYear()+1);
+          date = t.toISOString().split('T')[0];
+          text = text.replace(re,'').replace(/\s+/g,' ').trim();
+          matched = true; break;
+        }
+      }
+    }
+    if (!matched) {
+      const m = text.match(/\b(\d{1,2})[\/\-](\d{1,2})\b/);
+      if (m) {
+        const t = new Date(todayD);
+        t.setMonth(+m[1]-1, +m[2]);
+        if (t < todayD) t.setFullYear(t.getFullYear()+1);
+        date = t.toISOString().split('T')[0];
+        text = text.replace(m[0],'').replace(/\s+/g,' ').trim();
+        matched = true;
+      }
+    }
+    if (!matched) {
+      const m = text.match(/\bin\s+(\d+)\s+days?\b/i);
+      if (m) {
+        const t = new Date(todayD);
+        t.setDate(t.getDate() + +m[1]);
+        date = t.toISOString().split('T')[0];
+        text = text.replace(m[0],'').replace(/\s+/g,' ').trim();
+      }
+    }
+  }
+
+  let bestCat = 'Personal', bestScore = 0;
+  const lower = text.toLowerCase();
+  for (const [cat, words] of Object.entries(KEYWORDS)) {
+    let score = 0;
+    for (const w of words) {
+      const re = new RegExp(`\\b${escRE(w)}\\b`, 'i');
+      if (re.test(lower)) score++;
+    }
+    if (score > bestScore) { bestScore = score; bestCat = cat; }
+  }
+
+  if (forcedType) type = forcedType;
+  else if (time) type = 'event';
+  else type = 'task';
+
+  text = text.replace(/\b(at|on|by|for)\s*$/i, '').trim();
+  text = text.replace(/^[-,;:\s]+|[-,;:\s]+$/g,'').trim();
+
+  return { type, category: bestCat, text, date, time, urgent };
+}
+
+// ============ EDIT MODAL ============
+const modal = $('#modal');
+const modalBackdrop = $('#modal-backdrop');
+let modalState = null;
+
+function openModal(item, kind, cat = null) {
+  modalState = { item, kind, cat };
+  $('#modal-title').textContent = `Edit ${kind}`;
+  const f = $('#modal-fields');
+  f.innerHTML = '';
+
+  const addField = (label, html) => {
+    const wrap = el('div', { class: 'field' });
+    wrap.appendChild(el('label', {}, label));
+    wrap.appendChild(typeof html === 'string'
+      ? Object.assign(document.createElement('div'), { innerHTML: html }).firstChild
+      : html);
+    f.appendChild(wrap);
+    return wrap.querySelector('input, select, textarea');
+  };
+
+  if (kind === 'task') {
+    const i_text = addField('Task', el('input', { type: 'text', value: item.text }));
+    const i_due = addField('Due', Object.assign(el('input', { type: 'text', value: item.due || '' }), { placeholder: 'TODAY · TONIGHT · Fri May 8' }));
+    const cat_select = el('select', {});
+    Object.keys(defaultData.categories).forEach(c => {
+      cat_select.appendChild(el('option', { value: c }, c));
+    });
+    addField('Category', cat_select);
+    if (modalState.cat) cat_select.value = modalState.cat;
+    const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: item.note || '' }), { placeholder: 'Optional' }));
+    const urgent_chk = el('input', { type: 'checkbox', id: 'modal-urgent' });
+    if (item.urgent) urgent_chk.checked = true;
+    const urgRow = el('div', { style: 'display:flex;align-items:center;gap:8px;padding:6px 0 2px;' });
+    urgRow.appendChild(urgent_chk);
+    urgRow.appendChild(el('label', { for: 'modal-urgent', style: 'font-size:13px;color:var(--text);font-weight:400;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;' }, 'Mark as urgent'));
+    f.appendChild(urgRow);
+    modalState.fields = { i_text, i_due, cat_select, i_note, urgent_chk };
+  } else if (kind === 'event') {
+    if (item.isRecurring) {
+      // Find the parent rule
+      const rule = userData.recurringEvents.find(r => r.id === item.recurringId);
+      const i_title = addField('Title', el('input', { type: 'text', value: rule ? rule.title : item.title }));
+      const timeField2 = el('div', { class: 'field' });
+      timeField2.appendChild(el('label', {}, 'Time'));
+      const i_time = el('input', { type: 'time', value: rule ? rule.time : item.time });
+      timeField2.appendChild(i_time); f.appendChild(timeField2);
+      const DOW_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const dayChecks = DOW_LABELS.map((lbl, i) => {
+        const cb = el('input', { type: 'checkbox' });
+        if (rule && rule.days.includes(i)) cb.checked = true;
+        return cb;
+      });
+      const dayRow2 = el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;' });
+      DOW_LABELS.forEach((lbl, i) => {
+        dayRow2.appendChild(el('label', { style: 'display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;border:1px solid var(--border);border-radius:6px;padding:3px 8px;' },
+          dayChecks[i], document.createTextNode(lbl)));
+      });
+      const daysWrap = el('div', { class: 'field' });
+      daysWrap.appendChild(el('label', {}, 'Repeats on'));
+      daysWrap.appendChild(dayRow2);
+      f.appendChild(daysWrap);
+      const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: rule ? (rule.note || '') : '' }), { placeholder: 'Optional' }));
+      f.appendChild(el('div', { style: 'font-size:12px;color:var(--text-muted);margin-top:4px;' }, 'Editing affects all future occurrences of this event.'));
+      modalState.fields = { i_title, i_time, i_note, dayChecks, isRecurringEdit: true, recurringId: item.recurringId };
+      $('#modal-title').textContent = 'Edit recurring event';
+    } else {
+      const i_title = addField('Title', el('input', { type: 'text', value: item.title }));
+      const dateRow = el('div', { class: 'field-row' });
+      const dateField = el('div', { class: 'field' });
+      dateField.appendChild(el('label', {}, 'Date'));
+      const i_date = el('input', { type: 'date', value: item.date });
+      dateField.appendChild(i_date);
+      const timeField = el('div', { class: 'field' });
+      timeField.appendChild(el('label', {}, 'Time'));
+      const i_time = el('input', { type: 'time', value: item.time });
+      timeField.appendChild(i_time);
+      dateRow.appendChild(dateField);
+      dateRow.appendChild(timeField);
+      f.appendChild(dateRow);
+      const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: item.note || '' }), { placeholder: 'Optional' }));
+      modalState.fields = { i_title, i_date, i_time, i_note };
+    }
+  } else if (kind === 'datedTask') {
+    const i_text = addField('Text', el('input', { type: 'text', value: item.text }));
+    const i_date = addField('Date', el('input', { type: 'date', value: item.date }));
+    modalState.fields = { i_text, i_date };
+  } else if (kind === 'note') {
+    const i_title = addField('Title', el('input', { type: 'text', value: item.title }));
+    const currentBody = item.body !== undefined ? item.body : stripHtml(item.html || '');
+    const i_body = addField('Body', el('textarea', {}, currentBody));
+    modalState.fields = { i_title, i_body };
+  } else if (kind === 'newNote') {
+    const i_title = addField('Title', el('input', { type: 'text', value: '' }));
+    const i_body = addField('Body', el('textarea', {}, ''));
+    modalState.fields = { i_title, i_body };
+    $('#modal-title').textContent = 'New note';
+  } else if (kind === 'newTask') {
+    const i_text = addField('Task', el('input', { type: 'text', value: '', placeholder: 'What needs to be done?' }));
+    const i_due = addField('Due', Object.assign(el('input', { type: 'text', value: '' }), { placeholder: 'TODAY · TONIGHT · Fri May 8' }));
+    const cat_select = el('select', {});
+    Object.keys(defaultData.categories).forEach(c => {
+      cat_select.appendChild(el('option', { value: c }, c));
+    });
+    addField('Category', cat_select);
+    cat_select.value = 'Personal';
+    const i_note = addField('Note', Object.assign(el('input', { type: 'text', value: '' }), { placeholder: 'Optional' }));
+    const urgent_chk = el('input', { type: 'checkbox', id: 'modal-urgent' });
+    const urgRow = el('div', { style: 'display:flex;align-items:center;gap:8px;padding:6px 0 2px;' });
+    urgRow.appendChild(urgent_chk);
+    urgRow.appendChild(el('label', { for: 'modal-urgent', style: 'font-size:13px;color:var(--text);font-weight:400;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;' }, 'Mark as urgent'));
+    f.appendChild(urgRow);
+    modalState.fields = { i_text, i_due, cat_select, i_note, urgent_chk };
+    $('#modal-title').textContent = 'New task';
+  } else if (kind === 'newEvent') {
+    const i_title = addField('Title', el('input', { type: 'text', value: '', placeholder: "What's the event?" }));
+
+    // Repeat selector
+    const repeatSel = el('select', { style: 'font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);width:100%;' });
+    [['', 'Does not repeat'], ['daily', 'Every day'], ['custom', 'On specific days…']].forEach(([v, lbl]) => {
+      const o = el('option', { value: v }, lbl);
+      repeatSel.appendChild(o);
+    });
+    const repeatField = el('div', { class: 'field' });
+    repeatField.appendChild(el('label', {}, 'Repeat'));
+    repeatField.appendChild(repeatSel);
+    f.appendChild(repeatField);
+
+    // Time field — always visible
+    const i_time = el('input', { type: 'time', value: '09:00' });
+    const timeFieldWrap = el('div', { class: 'field' });
+    timeFieldWrap.appendChild(el('label', {}, 'Time'));
+    timeFieldWrap.appendChild(i_time);
+    f.appendChild(timeFieldWrap);
+
+    // Day-of-week picker (shown for "custom")
+    const DOW_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const dayChecks = DOW_LABELS.map((lbl, i) => {
+      const cb = el('input', { type: 'checkbox' });
+      cb.dataset.dow = i;
+      return cb;
+    });
+    const dayRow = el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;' });
+    DOW_LABELS.forEach((lbl, i) => {
+      const chip = el('label', { style: 'display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;border:1px solid var(--border);border-radius:6px;padding:3px 8px;' },
+        dayChecks[i], document.createTextNode(lbl));
+      dayRow.appendChild(chip);
+    });
+    const repeatDaysField = el('div', { class: 'field', style: 'display:none' });
+    repeatDaysField.appendChild(el('label', {}, 'Repeat on'));
+    repeatDaysField.appendChild(dayRow);
+    f.appendChild(repeatDaysField);
+
+    // Date field — hidden when repeating
+    const dateField = el('div', { class: 'field' });
+    dateField.appendChild(el('label', {}, 'Date'));
+    const i_date = el('input', { type: 'date', value: TODAY });
+    dateField.appendChild(i_date);
+    f.appendChild(dateField);
+
+    // Start date — shown when repeating
+    const startField = el('div', { class: 'field', style: 'display:none' });
+    startField.appendChild(el('label', {}, 'Starts on'));
+    const i_startDate = el('input', { type: 'date', value: TODAY });
+    startField.appendChild(i_startDate);
+    f.appendChild(startField);
+
+    const i_note = addField('Note (optional)', el('input', { type: 'text', value: '' }));
+
+    // Toggle repeat UI based on selection
+    repeatSel.addEventListener('change', () => {
+      const v = repeatSel.value;
+      const repeating = v !== '';
+      dateField.style.display = repeating ? 'none' : '';
+      startField.style.display = repeating ? '' : 'none';
+      repeatDaysField.style.display = v === 'custom' ? '' : 'none';
+      if (v === 'custom' && !dayChecks.some(c => c.checked)) {
+        dayChecks[new Date().getDay()].checked = true;
+      }
+    });
+
+    modalState.fields = { i_title, i_date, i_time, i_note, repeatSel, dayChecks, i_startDate };
+    $('#modal-title').textContent = 'New event';
+  }
+
+  $('#modal-delete').style.display = kind.startsWith('new') ? 'none' : '';
+  modalBackdrop.classList.add('open');
+  setTimeout(() => {
+    const first = f.querySelector('input, textarea');
+    if (first) first.focus();
+  }, 50);
+}
+
+function closeModal() {
+  modalBackdrop.classList.remove('open');
+  modalState = null;
+  // Reset delete button armed state
+  const delBtn = $('#modal-delete');
+  delete delBtn.dataset.armed;
+  delBtn.textContent = 'Delete';
+  delBtn.removeAttribute('style');
+}
+
+function saveModal() {
+  if (!modalState) return;
+  const { item, kind } = modalState;
+  const f = modalState.fields;
+
+  if (kind === 'task') {
+    const newText = f.i_text.value.trim();
+    if (!newText) { alert('Text required'); return; }
+    const newCat = f.cat_select.value;
+    const newDue = f.i_due.value.trim();
+    const newNote = f.i_note.value.trim();
+    const isUrgent = f.urgent_chk.checked;
+
+    if (isUserAdded(item.id)) {
+      for (const [cat, tasks] of Object.entries(userData.categories)) {
+        const idx = tasks.findIndex(t => t.id === item.id);
+        if (idx >= 0) {
+          const updated = { ...tasks[idx], text: newText, due: newDue || undefined, urgent: isUrgent || undefined, note: newNote || undefined };
+          tasks.splice(idx, 1);
+          if (cat !== newCat) {
+            userData.categories[newCat] = userData.categories[newCat] || [];
+            userData.categories[newCat].push(updated);
+          } else {
+            userData.categories[cat].push(updated);
+          }
+          break;
+        }
+      }
+      // sync text to datedTask if same id exists
+      const dtIdx = userData.datedTasks.findIndex(t => t.id === item.id);
+      if (dtIdx >= 0) userData.datedTasks[dtIdx].text = newText;
+    } else {
+      userData.edits[item.id] = {
+        ...(userData.edits[item.id] || {}),
+        text: newText,
+        due: newDue || undefined,
+        note: newNote || undefined,
+        urgent: isUrgent || undefined,
+      };
+      const origCat = getOrigCat(item.id);
+      if (newCat === origCat) {
+        delete userData.recategorized[item.id];
+      } else {
+        userData.recategorized[item.id] = newCat;
+      }
+    }
+  } else if (kind === 'event') {
+    if (f.isRecurringEdit) {
+      // Edit the recurring rule itself
+      const newTitle = f.i_title.value.trim();
+      const newTime = f.i_time.value;
+      if (!newTitle || !newTime) { alert('Title and time required'); return; }
+      const newNote = f.i_note.value.trim();
+      const newDays = f.dayChecks.map((cb, i) => cb.checked ? i : -1).filter(i => i >= 0);
+      if (!newDays.length) { alert('Select at least one day'); return; }
+      const idx = userData.recurringEvents.findIndex(r => r.id === f.recurringId);
+      if (idx >= 0) {
+        userData.recurringEvents[idx] = { ...userData.recurringEvents[idx], title: newTitle, time: newTime, note: newNote, days: newDays };
+      }
+    } else {
+      const newTitle = f.i_title.value.trim();
+      const newDate = f.i_date.value;
+      const newTime = f.i_time.value;
+      if (!newTitle || !newDate || !newTime) { alert('Title, date, time required'); return; }
+      const newNote = f.i_note.value.trim();
+      if (isUserAdded(item.id)) {
+        const idx = userData.events.findIndex(e => e.id === item.id);
+        if (idx >= 0) userData.events[idx] = { ...userData.events[idx], title: newTitle, date: newDate, time: newTime, note: newNote };
+      } else {
+        userData.edits[item.id] = { title: newTitle, date: newDate, time: newTime, note: newNote };
+      }
+    }
+  } else if (kind === 'datedTask') {
+    const newText = f.i_text.value.trim();
+    const newDate = f.i_date.value;
+    if (!newText || !newDate) { alert('Text and date required'); return; }
+    if (isUserAdded(item.id)) {
+      const idx = userData.datedTasks.findIndex(t => t.id === item.id);
+      if (idx >= 0) userData.datedTasks[idx] = { ...userData.datedTasks[idx], text: newText, date: newDate };
+    } else {
+      userData.edits[item.id] = { text: newText, date: newDate };
+    }
+  } else if (kind === 'note') {
+    const newTitle = f.i_title.value.trim();
+    const newBody = f.i_body.value;
+    if (!newTitle) { alert('Title required'); return; }
+    if (isUserAdded(item.id)) {
+      const idx = userData.notes.findIndex(n => n.id === item.id);
+      if (idx >= 0) userData.notes[idx] = { ...userData.notes[idx], title: newTitle, body: newBody, html: textToHtml(newBody) };
+    } else {
+      userData.edits[item.id] = { title: newTitle, body: newBody, html: textToHtml(newBody) };
+    }
+  } else if (kind === 'newNote') {
+    const newTitle = f.i_title.value.trim() || 'Untitled note';
+    const newBody = f.i_body.value;
+    const id = 'u_n_' + Date.now();
+    userData.notes.push({ id, title: newTitle, body: newBody, html: textToHtml(newBody) });
+  } else if (kind === 'newTask') {
+    const newText = f.i_text.value.trim();
+    if (!newText) { alert('Text required'); return; }
+    const newCat = f.cat_select.value;
+    const newDue = f.i_due.value.trim();
+    const newNote = f.i_note.value.trim();
+    const isUrgent = f.urgent_chk.checked;
+    const id = 'u_t_' + Date.now();
+    userData.categories[newCat] = userData.categories[newCat] || [];
+    userData.categories[newCat].push({
+      id, text: newText,
+      due: newDue || undefined,
+      note: newNote || undefined,
+      urgent: isUrgent || undefined,
+    });
+  } else if (kind === 'newEvent') {
+    const newTitle = f.i_title.value.trim();
+    const newTime = f.i_time.value;
+    const newNote = f.i_note.value.trim();
+    if (!newTitle || !newTime) { alert('Title and time required'); return; }
+
+    const repeatMode = f.repeatSel ? f.repeatSel.value : '';
+    if (repeatMode === 'daily') {
+      const startDate = f.i_startDate.value || TODAY;
+      const id = 'u_r_' + Date.now();
+      userData.recurringEvents.push({ id, title: newTitle, time: newTime, note: newNote, startDate, days: [0,1,2,3,4,5,6] });
+    } else if (repeatMode === 'custom') {
+      const selectedDays = f.dayChecks.map((cb, i) => cb.checked ? i : -1).filter(i => i >= 0);
+      if (!selectedDays.length) { alert('Select at least one day to repeat on.'); return; }
+      const startDate = f.i_startDate.value || TODAY;
+      const id = 'u_r_' + Date.now();
+      userData.recurringEvents.push({ id, title: newTitle, time: newTime, note: newNote, startDate, days: selectedDays });
+    } else {
+      const newDate = f.i_date.value;
+      if (!newDate) { alert('Date required'); return; }
+      const id = 'u_e_' + Date.now();
+      userData.events.push({ id, title: newTitle, date: newDate, time: newTime, note: newNote });
+    }
+  }
+
+  save(KEY_USER, userData);
+  closeModal();
+  render();
+  showToast('Saved', null, null);
+}
+
+function deleteFromModal() {
+  if (!modalState) return;
+  const btn = $('#modal-delete');
+
+  // First click: arm the button — show confirmation state
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = '1';
+    btn.textContent = 'Confirm delete';
+    btn.style.cssText = 'background:var(--urgent);color:#fff;border-color:var(--urgent);';
+    // Auto-disarm after 3 seconds if not confirmed
+    setTimeout(() => {
+      if (btn.dataset.armed) {
+        delete btn.dataset.armed;
+        btn.textContent = 'Delete';
+        btn.removeAttribute('style');
+      }
+    }, 3000);
+    return;
+  }
+
+  // Second click: confirmed — actually delete
+  delete btn.dataset.armed;
+  const { item, kind } = modalState;
+  const f = modalState.fields;
+
+  if (kind === 'event' && f && f.isRecurringEdit) {
+    userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== f.recurringId);
+    save(KEY_USER, userData);
+    closeModal();
+    render();
+    showToast('Recurring event deleted');
+    return;
+  }
+  performDelete(item.id, kind);
+  closeModal();
+}
+
+function performDelete(id, kind) {
+  const undoState = JSON.parse(JSON.stringify({ userData, checks }));
+  if (isUserAdded(id)) {
+    for (const cat of Object.keys(userData.categories)) {
+      userData.categories[cat] = (userData.categories[cat] || []).filter(t => t.id !== id);
+    }
+    userData.events = userData.events.filter(e => e.id !== id);
+    userData.datedTasks = userData.datedTasks.filter(t => t.id !== id);
+    userData.notes = userData.notes.filter(n => n.id !== id);
+    userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== id);
+  } else {
+    if (!userData.deleted.includes(id)) userData.deleted.push(id);
+  }
+  save(KEY_USER, userData);
+  render();
+  showToast('Deleted', 'Undo', () => {
+    userData = undoState.userData;
+    checks = undoState.checks;
+    save(KEY_USER, userData);
+    save(KEY_CHECKS, checks);
+    render();
+  });
+}
+
+$('#modal-save').addEventListener('click', saveModal);
+$('#modal-cancel').addEventListener('click', closeModal);
+$('#modal-delete').addEventListener('click', deleteFromModal);
+modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (modalState) {
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveModal();
+  }
+});
+
+// ============ TOAST ============
+const toast = $('#toast');
+const toastText = $('#toast-text');
+const toastAction = $('#toast-action');
+let toastTimer = null;
+function showToast(text, actionText, actionFn) {
+  toastText.textContent = text;
+  if (actionText) {
+    toastAction.style.display = '';
+    toastAction.textContent = actionText;
+    toastAction.onclick = () => { actionFn(); hideToast(); };
+  } else {
+    toastAction.style.display = 'none';
+  }
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, actionText ? 5000 : 1500);
+}
+function hideToast() { toast.classList.remove('show'); }
+
+// ============ RENDER ============
+let selectedDate = TODAY;
+
+function render() {
+  renderToday();
+  renderWeek();
+  renderDayDetail(selectedDate);
+  renderFlex();
+  renderCards();
+  renderNotes();
+  renderProgress();
+  renderDigest();
+  applySearchFilter();
+  renderWeddingCountdown();
+  renderNextUp();
+}
+
+function renderTask(t, opts={}) {
+  const cat = opts.cat;
+  const wrap = el('div', { class: 'task'
+    + (checks[t.id] ? ' done' : '')
+    + (isUserAdded(t.id) ? ' user-added' : (isEdited(t.id) ? ' edited' : ''))
+  });
+  // Store searchable text for real-time search filtering
+  wrap.dataset.searchText = ((t.text || '') + ' ' + (t.due || '') + ' ' + (t.note || '') + ' ' + (cat || '')).toLowerCase();
+
+  const cb = el('input', { type: 'checkbox' });
+  cb.id = 'cb-' + t.id + (cat ? '-' + cat : '') + (opts.suffix || '');
+  if (checks[t.id]) cb.checked = true;
+  cb.addEventListener('change', () => {
+    checks[t.id] = cb.checked;
+    save(KEY_CHECKS, checks);
+    render();
+  });
+  wrap.appendChild(cb);
+
+  const labelWrap = el('div', { class: 'label-wrap' });
+  labelWrap.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('.actions')) return;
+    if (opts.kind === 'event') openModal(opts.original || t, 'event');
+    else if (opts.kind === 'datedTask') openModal(opts.original || t, 'datedTask');
+    else openModal(t, 'task', cat);
+  });
+  labelWrap.appendChild(document.createTextNode(t.text));
+  if (t.due) {
+    labelWrap.appendChild(el('span', { class: 'due' + (t.urgent ? ' urgent' : '') }, t.due));
+  }
+  if (cat && (t.due === 'TODAY' || t.due === 'TONIGHT')) {
+    labelWrap.appendChild(el('span', { class: 'due' }, '· ' + cat));
+  }
+  if (t.note) labelWrap.appendChild(el('span', { class: 'note' }, t.note));
+  if (t.subtasks) {
+    const ul = el('ul', { class: 'subtasks' });
+    t.subtasks.forEach(s => ul.appendChild(el('li', {}, s)));
+    labelWrap.appendChild(ul);
+  }
+  wrap.appendChild(labelWrap);
+
+  const actions = el('div', { class: 'actions' });
+  const editBtn = el('button', { class: 'icon-btn', title: 'Edit' }, '✎');
+  editBtn.addEventListener('click', () => {
+    if (opts.kind === 'event') openModal(opts.original || t, 'event');
+    else if (opts.kind === 'datedTask') openModal(opts.original || t, 'datedTask');
+    else openModal(t, 'task', cat);
+  });
+  const delBtn = el('button', { class: 'icon-btn delete', title: 'Delete' }, '×');
+  delBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const orig = opts.original || t;
+    if (orig.isRecurring) {
+      userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== orig.recurringId);
+      save(KEY_USER, userData);
+      render();
+      showToast('Recurring event deleted');
+    } else {
+      performDelete(t.id, opts.kind || 'task');
+    }
+  });
+  actions.appendChild(editBtn);
+  actions.appendChild(delBtn);
+  wrap.appendChild(actions);
+
+  return wrap;
+}
+
+function renderToday() {
+  const grid = $('#today-grid');
+  grid.innerHTML = '';
+  const data = getData();
+  const items = [];
+  const seen = new Set();
+  for (const [cat, tasks] of Object.entries(data.categories)) {
+    for (const t of tasks) {
+      if ((t.due === 'TODAY' || t.due === 'TONIGHT') && !seen.has(t.text)) {
+        seen.add(t.text);
+        items.push({ ...t, _cat: cat });
+      }
+    }
+  }
+  for (const ev of data.events) {
+    if (ev.date === TODAY) {
+      items.push({ id: ev.id, text: `${fmtTime(ev.time)} — ${ev.title}`, due: 'TODAY', urgent: true, note: ev.note, _cat: 'Calendar', _orig: ev, _kind: 'event' });
+    }
+  }
+  // Google Calendar events for today
+  for (const ev of gcalEvents) {
+    if (ev.date === TODAY && !checks[ev.id]) {
+      items.push({ id: ev.id, text: `${ev.time ? fmtTime(ev.time) + ' — ' : ''}${ev.title}`, due: 'TODAY', urgent: false, note: ev.note, _cat: '📅 Google Cal', _orig: ev, _kind: 'gcal' });
+    }
+  }
+  for (const dt of data.datedTasks) {
+    if (dt.date === TODAY) {
+      items.push({ id: dt.id, text: dt.text, due: 'TODAY', urgent: true, _cat: 'Today', _orig: dt, _kind: 'datedTask' });
+    }
+  }
+  items.forEach(t => {
+    grid.appendChild(renderTask(t, {
+      cat: t._cat,
+      suffix: '-today',
+      kind: t._kind || 'task',
+      original: t._orig,
+    }));
+  });
+  $('#today-count').textContent = `${items.filter(t => !checks[t.id]).length} open · ${items.length} total`;
+}
+
+function renderWeek() {
+  const ws = $('#week-strip');
+  ws.innerHTML = '';
+  const data = getData();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(todayD); d.setDate(d.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    const dayEl = el('div', { class: 'day clickable' + (i === 0 ? ' today' : '') });
+    dayEl.title = 'Click to see everything for this day';
+    dayEl.addEventListener('click', () => setCalView('day', iso));
+    dayEl.appendChild(el('div', { class: 'dow' }, fmtDow[d.getDay()]));
+    dayEl.appendChild(el('div', { class: 'dom' }, String(d.getDate())));
+    data.events.filter(e => e.date === iso).forEach(e => {
+      const isUser = isUserAdded(e.id);
+      const evEl = el('div', { class: 'ev' + (isUser ? ' user' : '') },
+        el('div', { class: 'ev-time' }, fmtTime(e.time)),
+        el('div', {}, e.title)
+      );
+      evEl.addEventListener('click', ev => { ev.stopPropagation(); openModal(e, 'event'); });
+      dayEl.appendChild(evEl);
+    });
+    // Google Calendar events in week strip
+    gcalEvents.filter(e => e.date === iso).forEach(e => {
+      const evEl = el('div', { class: 'ev', style: 'opacity:0.75;border-left:2px solid #4285f4;' },
+        el('div', { class: 'ev-time' }, e.time ? fmtTime(e.time) : '📅'),
+        el('div', {}, e.title)
+      );
+      dayEl.appendChild(evEl);
+    });
+    data.datedTasks.filter(t => t.date === iso).forEach(t => {
+      const isUser = isUserAdded(t.id);
+      const tEl = el('div', { class: 'ev task-due' + (isUser ? ' user' : '') },
+        el('div', { class: 'ev-time' }, 'task'),
+        el('div', {}, t.text)
+      );
+      tEl.addEventListener('click', ev => { ev.stopPropagation(); openModal(t, 'datedTask'); });
+      dayEl.appendChild(tEl);
+    });
+    ws.appendChild(dayEl);
+  }
+}
+
+function renderDayDetail(date) {
+  const view = $('#today-view');
+  view.innerHTML = '';
+  const data = getData();
+  const d = new Date(date + 'T12:00:00');
+  const isToday = date === TODAY;
+
+  const card = el('div', { class: 'today-detail' });
+
+  const left = el('div', { class: 'left' });
+  left.appendChild(el('div', { class: 'dow' }, fmtDowLong[d.getDay()]));
+  left.appendChild(el('div', { class: 'dom' }, String(d.getDate())));
+  left.appendChild(el('div', { class: 'month' }, `${fmtMonthLong[d.getMonth()]} ${d.getFullYear()}`));
+  if (isToday) left.appendChild(el('div', { class: 'today-tag' }, 'Today'));
+  card.appendChild(left);
+
+  const right = el('div', { class: 'right' });
+
+  const events = data.events
+    .filter(e => e.date === date)
+    .sort((a, b) => a.time.localeCompare(b.time));
+  if (events.length) {
+    const sec = el('div', { class: 'section' });
+    sec.appendChild(el('h4', {}, 'Schedule'));
+    events.forEach(e => {
+      const evEl = el('div', { class: 'ev' },
+        el('div', { class: 'ev-time' }, fmtTime(e.time)),
+        el('div', {}, e.title + (e.note ? ' — ' + e.note : ''))
+      );
+      evEl.addEventListener('click', () => openModal(e, 'event'));
+      sec.appendChild(evEl);
+    });
+    right.appendChild(sec);
+  }
+
+  const dated = data.datedTasks.filter(t => t.date === date);
+  if (dated.length) {
+    const sec = el('div', { class: 'section' });
+    sec.appendChild(el('h4', {}, isToday ? 'Due today' : 'Tasks due'));
+    dated.forEach(t => {
+      const tEl = el('div', { class: 'ev task-due' + (checks[t.id] ? ' done' : '') },
+        el('div', { class: 'ev-time' }, 'task'),
+        el('div', {}, t.text)
+      );
+      tEl.addEventListener('click', () => openModal(t, 'datedTask'));
+      sec.appendChild(tEl);
+    });
+    right.appendChild(sec);
+  }
+
+  let urgent = [];
+  if (isToday) {
+    const seen = new Set();
+    for (const [cat, tasks] of Object.entries(data.categories)) {
+      for (const t of tasks) {
+        if ((t.due === 'TODAY' || t.due === 'TONIGHT') && !seen.has(t.text)) {
+          seen.add(t.text);
+          urgent.push({ ...t, _cat: cat });
+        }
+      }
+    }
+    if (urgent.length) {
+      const open = urgent.filter(t => !checks[t.id]).length;
+      const sec = el('div', { class: 'section' });
+      sec.appendChild(el('h4', {}, `Urgent · ${open} of ${urgent.length}`));
+      urgent.forEach(t => {
+        const tEl = el('div', { class: 'ev urgent-task' + (checks[t.id] ? ' done' : '') },
+          el('div', { class: 'ev-time' }, (t.due === 'TONIGHT' ? 'tonight · ' : '') + t._cat),
+          el('div', {}, t.text)
+        );
+        tEl.addEventListener('click', () => openModal(t, 'task', t._cat));
+        sec.appendChild(tEl);
+      });
+      right.appendChild(sec);
+    }
+  }
+
+  if (!events.length && !dated.length && !urgent.length) {
+    right.appendChild(el('div', { class: 'empty' }, isToday ? 'Nothing scheduled, no urgent tasks. Enjoy.' : 'Nothing on this day.'));
+  }
+
+  card.appendChild(right);
+  view.appendChild(card);
+}
+
+function renderFlex() {
+  const fe = $('#flex-events');
+  if (!fe) return;
+  fe.innerHTML = '';
+  if (!defaultData.flexible.length) { fe.style.display = 'none'; return; }
+  fe.style.display = '';
+  defaultData.flexible.forEach(f => {
+    fe.appendChild(el('div', { class: 'chip' }, el('strong', {}, 'This week: '), f));
+  });
+}
+
+function renderCards() {
+  const cards = $('#cards');
+  cards.innerHTML = '';
+  const data = getData();
+  for (const [cat, tasks] of Object.entries(data.categories)) {
+    if (!tasks.length) continue;
+    const card = el('div', { class: 'card' });
+    const open = tasks.filter(t => !checks[t.id]).length;
+    card.appendChild(el('h3', {}, cat, el('span', { class: 'count' }, `${open} of ${tasks.length}`)));
+    tasks.forEach(t => card.appendChild(renderTask(t, { cat })));
+    // Placeholder shown when all tasks are hidden by search
+    card.appendChild(el('div', { class: 'search-empty' }, 'No matching tasks'));
+    cards.appendChild(card);
+  }
+}
+
+function renderNotes() {
+  const notes = $('#notes');
+  notes.innerHTML = '';
+  const data = getData();
+  data.notes.forEach(n => {
+    const isUser = isUserAdded(n.id);
+    const isE = isEdited(n.id);
+    const det = el('details', { class: 'note-card' + (isUser ? ' user-added' : (isE ? ' edited' : '')) });
+    const sum = el('summary', {});
+    sum.appendChild(el('span', { class: 'summary-text' }, n.title));
+    const acts = el('span', { class: 'summary-actions' });
+    const editBtn = el('button', { class: 'icon-btn-light', title: 'Edit' }, '✎');
+    editBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      openModal(n, 'note');
+    });
+    acts.appendChild(editBtn);
+    const delNoteBtn = el('button', { class: 'icon-btn-light', title: 'Delete' }, '×');
+    delNoteBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      performDelete(n.id, 'note');
+    });
+    acts.appendChild(delNoteBtn);
+    sum.appendChild(acts);
+    det.appendChild(sum);
+
+    const body = el('div', { class: 'body', html: n.html || textToHtml(n.body || '') });
+    det.appendChild(body);
+    notes.appendChild(det);
+  });
+}
+
+function renderProgress() {
+  const data = getData();
+  let done = 0, total = 0;
+  for (const tasks of Object.values(data.categories)) {
+    for (const t of tasks) { total++; if (checks[t.id]) done++; }
+  }
+  $('#progress').textContent = `${done} / ${total} complete`;
+}
+
+// ============ QUICK ADD ============
+const qaInput = $('#qa-input');
+const qaPreview = $('#qa-preview');
+const qaAdd = $('#qa-add');
+let lastParsed = null;
+let manualOverride = {};
+
+function refreshPreview() {
+  qaPreview.innerHTML = '';
+  manualOverride = {};
+  const parsed = parseQuickAdd(qaInput.value);
+  lastParsed = parsed;
+  if (!parsed || !parsed.text) {
+    qaPreview.appendChild(el('span', { class: 'qa-empty' }, "Type something — I'll route it to the right place."));
+    qaAdd.disabled = true;
+    return;
+  }
+  qaAdd.disabled = false;
+
+  const typeSel = el('select', {});
+  ['task','event','note'].forEach(t => {
+    typeSel.appendChild(el('option', { value: t }, t.charAt(0).toUpperCase() + t.slice(1)));
+  });
+  typeSel.value = parsed.type;
+  typeSel.addEventListener('change', () => { manualOverride.type = typeSel.value; });
+  qaPreview.appendChild(el('span', { class: 'qa-chip type' }, typeSel));
+
+  qaPreview.appendChild(el('span', { class: 'qa-chip' }, 'in '));
+  const catSel = el('select', {});
+  Object.keys(defaultData.categories).forEach(c => {
+    catSel.appendChild(el('option', { value: c }, c));
+  });
+  catSel.value = parsed.category;
+  catSel.addEventListener('change', () => { manualOverride.category = catSel.value; });
+  qaPreview.appendChild(el('span', { class: 'qa-chip' }, catSel));
+
+  if (parsed.date) {
+    qaPreview.appendChild(el('span', { class: 'qa-chip' + (parsed.urgent ? ' urgent' : '') },
+      `· ${parsed.date === TODAY ? 'Today' : fmtDate(parsed.date)}${parsed.time ? ' ' + fmtTime(parsed.time) : ''}`));
+  } else if (parsed.time) {
+    qaPreview.appendChild(el('span', { class: 'qa-chip' }, `· ${fmtTime(parsed.time)} (no date)`));
+  }
+  qaPreview.appendChild(el('span', { class: 'qa-chip' }, '"' + parsed.text + '"'));
+}
+
+qaInput.addEventListener('input', refreshPreview);
+qaInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commitAdd(); }
+});
+
+function commitAdd() {
+  if (!lastParsed || !lastParsed.text) return;
+  const p = { ...lastParsed, ...manualOverride };
+  const id = 'u_' + Date.now();
+
+  if (p.type === 'event') {
+    if (!p.date) p.date = TODAY;
+    userData.events.push({ id, date: p.date, time: p.time || '09:00', title: p.text, note: '' });
+  } else if (p.type === 'note') {
+    userData.notes.push({ id, title: p.text.slice(0, 60), body: p.text, html: textToHtml(p.text) });
+  } else {
+    userData.categories[p.category] = userData.categories[p.category] || [];
+    userData.categories[p.category].push({
+      id, text: p.text,
+      due: p.date ? fmtDate(p.date) : undefined,
+      urgent: p.urgent || undefined,
+    });
+    if (p.date) {
+      userData.datedTasks.push({ id, date: p.date, text: p.text });
+    }
+  }
+  save(KEY_USER, userData);
+  qaInput.value = '';
+  refreshPreview();
+  render();
+  showToast('Added', null, null);
+}
+qaAdd.addEventListener('click', commitAdd);
+
+// ============ ADD BUTTONS ============
+$('#add-note-btn').addEventListener('click', () => {
+  openModal({}, 'newNote');
+});
+document.querySelectorAll('.add-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.add;
+    if (type === 'task') openModal({}, 'newTask');
+    else if (type === 'event') openModal({}, 'newEvent');
+    else if (type === 'note') openModal({}, 'newNote');
+  });
+});
+
+// ============ DIGEST ============
+const digestPreviewEl = $('#digest-preview');
+const settingEmail = $('#setting-email');
+const settingPhone = $('#setting-phone');
+const settingCarrier = $('#setting-carrier');
+settingEmail.value = settings.email || '';
+settingPhone.value = settings.phone || '';
+settingCarrier.value = settings.carrier || '';
+
+[settingEmail, settingPhone, settingCarrier].forEach(inp => {
+  inp.addEventListener('input', () => {
+    settings = {
+      ...settings,
+      email: settingEmail.value.trim(),
+      phone: settingPhone.value.trim(),
+      carrier: settingCarrier.value,
+    };
+    save(KEY_SETTINGS, settings);
+    renderDigest();
+  });
+});
+
+function buildDigest() {
+  const data = getData();
+  const lines = [];
+  lines.push(`Good morning Ezra — ${fmtDateLong(TODAY)}`);
+  lines.push('');
+
+  const todayItems = [];
+  const seen = new Set();
+  for (const tasks of Object.values(data.categories)) {
+    for (const t of tasks) {
+      if ((t.due === 'TODAY' || t.due === 'TONIGHT') && !checks[t.id] && !seen.has(t.text)) {
+        seen.add(t.text);
+        todayItems.push(t);
+      }
+    }
+  }
+  if (todayItems.length) {
+    lines.push(`TODAY (${todayItems.length} open)`);
+    todayItems.forEach(t => lines.push(`• ${t.text}${t.due === 'TONIGHT' ? ' (tonight)' : ''}`));
+    lines.push('');
+  }
+
+  const weekEvents = data.events
+    .filter(e => e.date >= TODAY && e.date <= addDays(TODAY, 7))
+    .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+  if (weekEvents.length) {
+    lines.push('THIS WEEK');
+    weekEvents.forEach(e => {
+      const d = new Date(e.date + 'T12:00:00');
+      lines.push(`• ${fmtDow[d.getDay()]} ${fmtTime(e.time)} — ${e.title}${e.note ? ' (' + e.note + ')' : ''}`);
+    });
+    lines.push('');
+  }
+
+  const upcoming = data.datedTasks
+    .filter(t => t.date >= TODAY && t.date <= addDays(TODAY, 14) && !checks[t.id])
+    .sort((a,b) => a.date.localeCompare(b.date));
+  if (upcoming.length) {
+    lines.push('UPCOMING');
+    upcoming.forEach(t => lines.push(`• ${fmtDate(t.date)} — ${t.text}`));
+    lines.push('');
+  }
+
+  let openTotal = 0, total = 0;
+  for (const tasks of Object.values(data.categories)) {
+    for (const t of tasks) { total++; if (!checks[t.id]) openTotal++; }
+  }
+  lines.push(`Open across all: ${openTotal} / ${total}`);
+  return lines.join('\n');
+}
+
+function buildSMSDigest() {
+  const data = getData();
+  const open = [];
+  const seen = new Set();
+  for (const tasks of Object.values(data.categories)) {
+    for (const t of tasks) {
+      if ((t.due === 'TODAY' || t.due === 'TONIGHT') && !checks[t.id] && !seen.has(t.text)) {
+        seen.add(t.text); open.push(t);
+      }
+    }
+  }
+  const todayEv = data.events.filter(e => e.date === TODAY);
+  const tomorrow = addDays(TODAY, 1);
+  const tmrEv = data.events.filter(e => e.date === tomorrow);
+  const parts = [];
+  parts.push(`${fmtMonth[todayD.getMonth()]} ${todayD.getDate()}: ${open.length} today`);
+  if (open[0]) parts.push(`top: ${open[0].text.slice(0,40)}`);
+  if (todayEv.length) parts.push(`today ${todayEv.map(e => fmtTime(e.time) + ' ' + e.title.slice(0,18)).join(', ')}`);
+  if (tmrEv.length) parts.push(`tmr ${tmrEv.map(e => fmtTime(e.time) + ' ' + e.title.slice(0,18)).join(', ')}`);
+  return parts.join(' · ');
+}
+
+function renderDigest() {
+  const text = buildDigest();
+  digestPreviewEl.textContent = text;
+  const subject = `Daily brief — ${fmtDateLong(TODAY)}`;
+  const emailHref = settings.email
+    ? `mailto:${encodeURIComponent(settings.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`
+    : '#';
+  const sms = buildSMSDigest();
+  let smsHref = '#', smsMsg = '';
+  if (settings.phone && settings.carrier) {
+    const gateway = `${settings.phone.replace(/\D/g,'')}@${settings.carrier}`;
+    smsHref = `mailto:${encodeURIComponent(gateway)}?subject=${encodeURIComponent('Brief')}&body=${encodeURIComponent(sms)}`;
+    smsMsg = `SMS will email ${gateway} — your carrier converts to a text. Free, no Twilio needed.`;
+  } else if (settings.phone) {
+    smsHref = `sms:${settings.phone}?body=${encodeURIComponent(sms)}`;
+    smsMsg = `Tip: pick a carrier above for free email→SMS automation.`;
+  }
+  $('#btn-email').href = emailHref;
+  $('#btn-sms').href = smsHref;
+  $('#btn-email').classList.toggle('primary', !!settings.email);
+  $('#digest-msg').textContent = settings.email ? smsMsg : 'Enter your email above to enable the email button.';
+}
+
+$('#btn-copy').addEventListener('click', () => {
+  navigator.clipboard.writeText(buildDigest()).then(() => {
+    $('#btn-copy').textContent = 'Copied!';
+    setTimeout(() => $('#btn-copy').textContent = 'Copy', 1500);
+  });
+});
+$('#btn-print').addEventListener('click', () => {
+  const w = window.open('', '_blank');
+  w.document.write('<pre style="font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">' + buildDigest() + '</pre>');
+  w.document.close();
+  w.print();
+});
+
+// ============ EXPORT / IMPORT / RESET ============
+$('#export').addEventListener('click', () => {
+  const data = { userData, checks, settings, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = el('a', { href: url, download: `dashboard-backup-${TODAY}.json` });
+  a.click();
+  URL.revokeObjectURL(url);
+});
+$('#import').addEventListener('click', () => $('#import-file').click());
+$('#import-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data.userData) { userData = data.userData; save(KEY_USER, userData); }
+      if (data.checks) { checks = data.checks; save(KEY_CHECKS, checks); }
+      if (data.settings) { settings = data.settings; save(KEY_SETTINGS, settings); }
+      render();
+      showToast('Imported', null, null);
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+$('#reset-all').addEventListener('click', () => {
+  const btn = $('#reset-all');
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = '1';
+    btn.textContent = 'Sure? Click again to reset';
+    btn.style.cssText = 'background:var(--urgent);color:#fff;border-color:var(--urgent);';
+    setTimeout(() => {
+      if (btn.dataset.armed) {
+        delete btn.dataset.armed;
+        btn.textContent = 'Reset everything';
+        btn.removeAttribute('style');
+      }
+    }, 3000);
+    return;
+  }
+  delete btn.dataset.armed;
+  localStorage.removeItem(KEY_CHECKS);
+  localStorage.removeItem(KEY_USER);
+  location.reload();
+});
+
+// ============ GOOGLE CALENDAR ============
+let gcalEvents = []; // events from Google Calendar — display only, not persisted in localStorage
+
+function updateGcalStatus(connected, eventCount) {
+  const statusEl = $('#gcal-status');
+  const connectBtn = $('#btn-gcal-connect');
+  const disconnectBtn = $('#btn-gcal-disconnect');
+  if (!statusEl) return;
+  if (connected) {
+    statusEl.textContent = `✓ Connected — ${eventCount} event${eventCount !== 1 ? 's' : ''} synced`;
+    statusEl.style.color = 'var(--note-accent)';
+    if (connectBtn) connectBtn.style.display = 'none';
+    if (disconnectBtn) disconnectBtn.style.display = '';
+  } else {
+    statusEl.textContent = 'Not connected';
+    statusEl.style.color = 'var(--text-muted)';
+    if (connectBtn) connectBtn.style.display = '';
+    if (disconnectBtn) disconnectBtn.style.display = 'none';
+  }
+}
+
+$('#btn-gcal-connect')?.addEventListener('click', async () => {
+  if (!settings.backend || !settings.token) {
+    alert('Configure your backend URL and sync token first.');
+    return;
+  }
+  try {
+    const resp = await fetch(`${cloudUrl()}/google-auth?action=url`, {
+      headers: { Authorization: `Bearer ${settings.token}` },
+    });
+    const data = await resp.json();
+    if (data.url) {
+      window.open(data.url, '_blank', 'width=600,height=700,noopener');
+      // Poll for connection after user completes OAuth
+      let polls = 0;
+      const poll = setInterval(async () => {
+        polls++;
+        if (polls > 30) { clearInterval(poll); return; }
+        try {
+          const sr = await fetch(`${cloudUrl()}/google-auth?action=status`);
+          const sd = await sr.json();
+          if (sd.connected) {
+            clearInterval(poll);
+            gcalEvents = [];
+            await cloudPull();
+          }
+        } catch { /* ignore */ }
+      }, 3000);
+    } else {
+      alert(data.error ?? 'Could not get OAuth URL. Check that GOOGLE_CLIENT_ID is set in Supabase secrets.');
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+});
+
+$('#btn-gcal-disconnect')?.addEventListener('click', async () => {
+  if (!confirm('Disconnect Google Calendar? Events from Google Calendar will no longer appear in the dashboard.')) return;
+  try {
+    await fetch(`${cloudUrl()}/google-auth?action=disconnect`, {
+      headers: { Authorization: `Bearer ${settings.token}` },
+    });
+    gcalEvents = [];
+    updateGcalStatus(false, 0);
+    render();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+});
+
+// ============ CLOUD SYNC ============
+let cloudPushTimer = null;
+const cloudUrl = () => settings.backend ? settings.backend.replace(/\/$/, '') : '';
+
+function cloudStatus(msg, dotState) {
+  const s = document.getElementById('cloud-status');
+  if (s) s.textContent = msg;
+  // Update sync dot in header button
+  const dot = document.getElementById('sync-dot');
+  if (dot && dotState) { dot.className = 'sync-dot ' + dotState; }
+  // Also show short status in the refresh button label
+  const lbl = document.getElementById('refresh-label');
+  if (lbl) {
+    if (msg && msg.includes('Sync')) lbl.textContent = 'Syncing…';
+    else if (msg && msg.includes('Synced')) lbl.textContent = 'Synced';
+    else if (msg && (msg.includes('failed') || msg.includes('Offline'))) lbl.textContent = 'Error';
+    else lbl.textContent = 'Sync';
+  }
+}
+
+function cloudPushDebounced() {
+  if (!settings.backend || !settings.token) return;
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(cloudPush, 500);
+}
+
+async function cloudPush() {
+  if (!settings.backend || !settings.token) return;
+  cloudStatus('Syncing...', 'busy');
+  try {
+    const resp = await fetch(`${cloudUrl()}/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.token}` },
+      body: JSON.stringify({ userData, checks, updated_at: lastLocalUpdate }),
+    });
+    if (!resp.ok) {
+      cloudStatus(`Push failed: ${resp.status} ${resp.statusText}`, 'error');
+      return;
+    }
+    const result = await resp.json();
+    // Server returns the merged userData — apply it so any WA/voice items added
+    // since our last pull are immediately visible (no extra GET round-trip needed)
+    if (result.userData) {
+      userData = result.userData;
+      migrateUserData(userData);
+      if (result.checks) checks = result.checks;
+      localStorage.setItem(KEY_USER, JSON.stringify(userData));
+      localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
+      if (result.added > 0) render(); // only re-render if server added items
+    }
+    // Use server's updated_at so all clients share the same timestamp baseline
+    lastLocalUpdate = result.updated_at || new Date().toISOString();
+    localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
+    cloudStatus(`Synced at ${new Date().toLocaleTimeString()}`, 'ok');
+  } catch (e) {
+    cloudStatus(`Offline (push): ${e.message}`, 'error');
+  }
+}
+
+function migrateUserData(ud) {
+  ['events','datedTasks','notes','deleted','recurringEvents'].forEach(k => {
+    if (!Array.isArray(ud[k])) ud[k] = [];
+  });
+  ['categories','edits','recategorized'].forEach(k => {
+    if (typeof ud[k] !== 'object' || ud[k] === null || Array.isArray(ud[k])) ud[k] = {};
+  });
+}
+
+// ─── DATA SAFETY LAYER ──────────────────────────────────────────────────────
+
+// Count total user items (events + tasks + notes)
+function countItems(u) {
+  if (!u) return 0;
+  return (u.events?.length || 0) +
+    Object.values(u.categories || {}).reduce((s, a) => s + (a?.length || 0), 0) +
+    (u.notes?.length || 0);
+}
+
+// Save a snapshot to a 3-slot rotating backup ring in localStorage.
+// Called automatically before every cloud pull.
+function saveLocalBackup() {
+  try {
+    const snap = JSON.stringify({
+      userData, checks,
+      ts: new Date().toISOString(),
+      count: countItems(userData),
+    });
+    const b2 = localStorage.getItem('ezra-dash-bak-2');
+    const b1 = localStorage.getItem('ezra-dash-bak-1');
+    if (b1) localStorage.setItem('ezra-dash-bak-2', b1);
+    if (b2) localStorage.setItem('ezra-dash-bak-3', b2);
+    localStorage.setItem('ezra-dash-bak-1', snap);
+  } catch(e) { console.warn('saveLocalBackup failed', e); }
+}
+
+// Merge cloud data into local state.
+// ONLY adds items from cloud that are not already in local.
+// Local items are NEVER removed (except via cloud tombstones in deleted[]).
+// Returns true if anything changed.
+function mergeCloudIntoLocal(cloud) {
+  const cloudUd = cloud.userData || {};
+  let changed = false;
+
+  // Build set of all local item IDs
+  const localIds = new Set();
+  (userData.events || []).forEach(e => localIds.add(e.id));
+  Object.values(userData.categories || {}).forEach(arr => arr.forEach(t => localIds.add(t.id)));
+  (userData.notes || []).forEach(n => localIds.add(n.id));
+  (userData.recurringEvents || []).forEach(r => localIds.add(r.id));
+
+  const allDeleted = new Set([...(userData.deleted || []), ...(cloudUd.deleted || [])]);
+
+  // Add cloud events not present locally
+  for (const e of (cloudUd.events || [])) {
+    if (!localIds.has(e.id) && !allDeleted.has(e.id)) {
+      userData.events.push(e); localIds.add(e.id); changed = true;
+    }
+  }
+  // Add cloud category tasks not present locally
+  for (const [cat, items] of Object.entries(cloudUd.categories || {})) {
+    userData.categories[cat] = userData.categories[cat] || [];
+    for (const item of items) {
+      if (!localIds.has(item.id) && !allDeleted.has(item.id)) {
+        userData.categories[cat].push(item); localIds.add(item.id); changed = true;
+      }
+    }
+  }
+  // Add cloud notes not present locally
+  for (const n of (cloudUd.notes || [])) {
+    if (!localIds.has(n.id) && !allDeleted.has(n.id)) {
+      userData.notes.push(n); localIds.add(n.id); changed = true;
+    }
+  }
+  // Add cloud recurring events not present locally
+  for (const r of (cloudUd.recurringEvents || [])) {
+    if (!localIds.has(r.id) && !allDeleted.has(r.id)) {
+      userData.recurringEvents.push(r); localIds.add(r.id); changed = true;
+    }
+  }
+  // Apply cloud tombstones — items deleted via phone/voice are removed locally
+  for (const id of (cloudUd.deleted || [])) {
+    if (!userData.deleted.includes(id)) {
+      userData.deleted.push(id);
+      userData.events = userData.events.filter(e => e.id !== id);
+      for (const cat of Object.keys(userData.categories))
+        userData.categories[cat] = userData.categories[cat].filter(t => t.id !== id);
+      userData.notes = userData.notes.filter(n => n.id !== id);
+      userData.recurringEvents = userData.recurringEvents.filter(r => r.id !== id);
+      changed = true;
+    }
+  }
+  // Merge cloud check-states for items not yet checked locally
+  for (const [id, val] of Object.entries(cloud.checks || {})) {
+    if (!(id in checks)) { checks[id] = val; changed = true; }
+  }
+  // Rebuild datedTasks from categories (deduplicated)
+  const seenDated = new Set((userData.datedTasks || []).map(dt => dt.id));
+  for (const items of Object.values(userData.categories)) {
+    for (const item of items) {
+      if (item.date && !seenDated.has(item.id)) {
+        userData.datedTasks.push({ id: item.id, date: item.date, text: item.text });
+        seenDated.add(item.id);
+      }
+    }
+  }
+  return changed;
+}
+
+// Export all data as a JSON file download
+function exportData() {
+  const blob = new Blob([JSON.stringify({ userData, checks, exported: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), {
+    href: url, download: `ezra-dashboard-${new Date().toISOString().split('T')[0]}.json`,
+  });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Restore from one of the 3 local backup slots (slot = 1, 2, or 3)
+function restoreLocalBackup(slot) {
+  const raw = localStorage.getItem(`ezra-dash-bak-${slot}`);
+  if (!raw) { cloudStatus(`No backup in slot ${slot}`); return; }
+  try {
+    const snap = JSON.parse(raw);
+    saveLocalBackup(); // save current state as newest backup before restoring
+    userData = snap.userData; checks = snap.checks || {};
+    migrateUserData(userData);
+    save(KEY_USER, userData); save(KEY_CHECKS, checks);
+    render();
+    cloudStatus(`Restored backup from ${new Date(snap.ts).toLocaleString()} (${snap.count} items)`);
+    cloudPush();
+  } catch(e) { cloudStatus(`Restore failed: ${e.message}`); }
+}
+
+async function cloudPull(force = false) {
+  if (!settings.backend || !settings.token) return;
+  cloudStatus('Syncing with cloud...', 'busy');
+  try {
+    const resp = await fetch(`${cloudUrl()}/sync`, {
+      headers: { 'Authorization': `Bearer ${settings.token}` },
+    });
+    if (!resp.ok) { cloudStatus(`Pull failed: ${resp.status} ${resp.statusText}`, 'error'); return; }
+    const cloud = await resp.json();
+    if (!cloud || !cloud.updated_at) {
+      cloudStatus('Cloud is empty — pushing local data', 'busy'); cloudPush(); return;
+    }
+    // Always save a local backup before touching anything
+    saveLocalBackup();
+    if (force) {
+      // Manual force-pull: full overwrite (user explicitly requested)
+      if (cloud.userData) { userData = cloud.userData; migrateUserData(userData); }
+      if (cloud.checks) checks = cloud.checks;
+    } else {
+      // Normal sync: safe merge — adds cloud items, never removes local ones
+      mergeCloudIntoLocal(cloud);
+      migrateUserData(userData);
+    }
+    // Absorb Google Calendar events (display-only, not saved to localStorage)
+    if (cloud.googleCalendar?.events) {
+      gcalEvents = cloud.googleCalendar.events;
+      updateGcalStatus(true, gcalEvents.length);
+    } else if (cloud.googleCalendar?.connected === false) {
+      gcalEvents = [];
+      updateGcalStatus(false, 0);
+    }
+    lastLocalUpdate = new Date().toISOString();
+    localStorage.setItem(KEY_USER, JSON.stringify(userData));
+    localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
+    localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
+    render();
+    const n = countItems(userData);
+    cloudStatus(`Synced — ${n} item${n !== 1 ? 's' : ''}`, 'ok');
+    if (!force) cloudPush(); // push merged result so cloud is canonical
+  } catch (e) {
+    cloudStatus(`Offline (pull): ${e.message}`, 'error');
+  }
+}
+
+async function testCloudConnection() {
+  if (!settings.backend || !settings.token) {
+    cloudStatus('Enter backend URL and sync token first');
+    return;
+  }
+  cloudStatus('Testing connection...');
+  try {
+    const resp = await fetch(`${cloudUrl()}/sync`, {
+      headers: { 'Authorization': `Bearer ${settings.token}` },
+    });
+    if (resp.ok) cloudStatus('Connection works');
+    else if (resp.status === 401) cloudStatus('Wrong sync token');
+    else if (resp.status === 404) cloudStatus('Backend URL is wrong (no /sync endpoint)');
+    else cloudStatus(`Server error: ${resp.status} ${resp.statusText}`);
+  } catch (e) {
+    cloudStatus(`Cannot reach backend: ${e.message}`);
+  }
+}
+
+const settingBackend = $('#setting-backend');
+const settingToken = $('#setting-token');
+const settingWhatsapp = $('#setting-whatsapp');
+const settingVoiceNumber = $('#setting-voice-number');
+settingBackend.value = settings.backend || '';
+settingToken.value = settings.token || '';
+settingWhatsapp.value = settings.whatsapp || '';
+settingVoiceNumber.value = settings.voiceNumber || '';
+[settingBackend, settingToken, settingWhatsapp, settingVoiceNumber].forEach(inp => {
+  inp.addEventListener('input', () => {
+    settings = {
+      ...settings,
+      backend: settingBackend.value.trim(),
+      token: settingToken.value.trim(),
+      whatsapp: settingWhatsapp.value.trim(),
+      voiceNumber: settingVoiceNumber.value.trim(),
+    };
+    save(KEY_SETTINGS, settings);
+  });
+});
+$('#btn-refresh').addEventListener('click', async () => {
+  const icon = $('#refresh-icon');
+  const label = $('#refresh-label');
+  icon.style.transition = 'transform 0.6s linear';
+  icon.style.transform = 'rotate(360deg)';
+  label.textContent = 'Syncing…';
+  try {
+    await cloudPush();
+    await cloudPull(true);
+    icon.style.transition = '';
+    icon.style.transform = '';
+    label.textContent = 'Synced ✓';
+    setTimeout(() => { label.textContent = 'Sync'; }, 2000);
+  } catch {
+    label.textContent = 'Error';
+    setTimeout(() => { label.textContent = 'Sync'; }, 2000);
+  }
+});
+
+$('#btn-test-connection').addEventListener('click', testCloudConnection);
+$('#btn-sync-now').addEventListener('click', cloudPush);
+$('#btn-pull-now').addEventListener('click', () => cloudPull(true));
+$('#btn-export-data').addEventListener('click', exportData);
+
+// Render the 3 local backup slots in the settings panel
+function renderBackupSlots() {
+  const container = $('#backup-slots');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let slot = 1; slot <= 3; slot++) {
+    const raw = localStorage.getItem(`ezra-dash-bak-${slot}`);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;';
+    if (!raw) {
+      row.innerHTML = `<span style="color:var(--text-muted)">Slot ${slot}: empty</span>`;
+    } else {
+      try {
+        const snap = JSON.parse(raw);
+        const dt = new Date(snap.ts).toLocaleString();
+        const btn = document.createElement('button');
+        btn.textContent = 'Restore';
+        btn.style.cssText = 'font-size:11px;padding:2px 8px;';
+        btn.addEventListener('click', () => restoreLocalBackup(slot));
+        row.appendChild(btn);
+        row.appendChild(Object.assign(document.createElement('span'), {
+          textContent: `Slot ${slot}: ${dt} — ${snap.count} items`,
+          style: 'color:var(--text-muted)',
+        }));
+      } catch { row.innerHTML = `<span style="color:var(--text-muted)">Slot ${slot}: corrupt</span>`; }
+    }
+    container.appendChild(row);
+  }
+}
+renderBackupSlots();
+
+// Auto-configure from URL params (used for iPhone one-tap setup link)
+(function() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('backend') || p.get('token')) {
+    if (p.get('backend')) { settings.backend = p.get('backend'); settingBackend.value = settings.backend; }
+    if (p.get('token'))   { settings.token   = p.get('token');   settingToken.value   = settings.token;   }
+    save(KEY_SETTINGS, settings);
+    history.replaceState(null, '', location.pathname);
+    cloudStatus('Settings auto-configured from link.');
+  }
+})();
+
+$('#btn-iphone-link').addEventListener('click', () => {
+  if (!settings.backend || !settings.token) {
+    cloudStatus('Enter backend URL and sync token first, then copy the link.');
+    return;
+  }
+  const base = 'https://eswag59-hue.github.io/ezra-dashboard/';
+  const url = base + '?backend=' + encodeURIComponent(settings.backend) + '&token=' + encodeURIComponent(settings.token);
+  navigator.clipboard.writeText(url).then(() => {
+    cloudStatus('iPhone link copied! Open it on your iPhone, then add to Home Screen.');
+  }).catch(() => {
+    prompt('Copy this URL and open it on your iPhone:', url);
+  });
+});
+
+if (settings.backend && settings.token) {
+  cloudStatus('Configured — auto-syncing on every change');
+}
+
+// ============ CAL TABS ============
+function setCalView(view, date) {
+  if (view === 'day' && date) selectedDate = date;
+  if (view === 'day') renderDayDetail(selectedDate);
+  document.querySelectorAll('.cal-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  $('#week-strip').style.display = view === 'week' ? '' : 'none';
+  $('#today-view').style.display = view === 'day' ? '' : 'none';
+  const dayTab = document.querySelector('.cal-tab[data-view="day"]');
+  if (dayTab) {
+    if (selectedDate === TODAY) {
+      dayTab.textContent = 'Today';
+    } else {
+      const d = new Date(selectedDate + 'T12:00:00');
+      dayTab.textContent = `${fmtDow[d.getDay()]} ${fmtMonth[d.getMonth()]} ${d.getDate()}`;
+    }
+  }
+}
+document.querySelectorAll('.cal-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    if (t.dataset.view === 'day') setCalView('day', TODAY);
+    else setCalView(t.dataset.view);
+  });
+});
+
+// ============ SEARCH ============
+let searchQuery = '';
+function applySearchFilter() {
+  const q = searchQuery.trim().toLowerCase();
+  document.querySelectorAll('.card').forEach(card => {
+    let visibleCount = 0;
+    card.querySelectorAll('.task').forEach(taskEl => {
+      const text = (taskEl.dataset.searchText || '');
+      const matches = !q || text.includes(q);
+      if (matches) {
+        delete taskEl.dataset.hiddenSearch;
+        visibleCount++;
+      } else {
+        taskEl.dataset.hiddenSearch = '1';
+      }
+    });
+    card.classList.toggle('all-hidden', visibleCount === 0 && !!q);
+  });
+}
+
+document.getElementById('search-input')?.addEventListener('input', function() {
+  searchQuery = this.value;
+  const clearBtn = document.getElementById('clear-search');
+  if (clearBtn) clearBtn.classList.toggle('visible', !!this.value);
+  applySearchFilter();
+});
+document.getElementById('clear-search')?.addEventListener('click', function() {
+  const inp = document.getElementById('search-input');
+  if (inp) { inp.value = ''; searchQuery = ''; }
+  this.classList.remove('visible');
+  applySearchFilter();
+});
+
+// ============ SHOW COMPLETED TOGGLE ============
+document.getElementById('toggle-done-btn')?.addEventListener('click', function() {
+  const on = document.body.classList.toggle('show-done');
+  this.textContent = on ? 'Hide done' : 'Show done';
+  this.style.color = on ? 'var(--accent)' : '';
+  this.style.borderColor = on ? 'var(--accent)' : '';
+});
+
+// ============ WEDDING COUNTDOWN ============
+// Update WEDDING_DATE to match actual date once confirmed
+const WEDDING_DATE = '2026-06-02'; // Tuesday, June 2, 2026
+
+function renderWeddingCountdown() {
+  const wrap = document.getElementById('wedding-countdown');
+  const daysEl = document.getElementById('wc-days');
+  const subEl  = document.getElementById('wc-sub');
+  if (!wrap || !daysEl || !subEl) return;
+
+  const today   = new Date(TODAY + 'T12:00:00');
+  const wedding = new Date(WEDDING_DATE + 'T12:00:00');
+  const diffDays = Math.round((wedding - today) / 86400000);
+
+  if (diffDays < 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  if (diffDays === 0) {
+    daysEl.textContent = 'TODAY 🎉';
+    subEl.textContent  = 'Mazel tov! It\'s your wedding day.';
+  } else if (diffDays === 1) {
+    daysEl.textContent = '1 day';
+    subEl.textContent  = 'Tomorrow! Tonight is Shabbos Kallah.';
+  } else {
+    const wedding_d = wedding;
+    daysEl.textContent = `${diffDays} days`;
+    subEl.textContent  = `${fmtDowLong[wedding_d.getDay()]}, ${fmtMonthLong[wedding_d.getMonth()]} ${wedding_d.getDate()}`;
+  }
+}
+
+// ============ NEXT UP WIDGET ============
+function renderNextUp() {
+  const wrap    = document.getElementById('next-up');
+  const titleEl = document.getElementById('nu-title');
+  const timeEl  = document.getElementById('nu-time');
+  const badgeEl = document.getElementById('nu-badge');
+  const iconEl  = document.getElementById('nu-icon');
+  if (!wrap || !titleEl || !timeEl || !badgeEl) return;
+
+  const data = getData();
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  let best = null, bestUntil = Infinity;
+
+  // Scan today's events for the nearest upcoming one (within 8 hours)
+  for (const ev of data.events) {
+    if (ev.date !== TODAY || !ev.time || checks[ev.id]) continue;
+    const [h, m] = ev.time.split(':').map(Number);
+    const evMin  = h * 60 + m;
+    const until  = evMin - nowMin;
+    if (until > 0 && until <= 480 && until < bestUntil) {
+      bestUntil = until;
+      best = { kind: 'event', title: ev.title, time: ev.time, until };
+    }
+  }
+
+  if (!best) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  titleEl.textContent = best.title;
+  if (iconEl) iconEl.textContent = '📅';
+
+  let badgeStr, subStr;
+  if (best.until < 60) {
+    badgeStr = `${best.until}m`;
+    subStr   = `at ${fmtTime(best.time)} · in ${best.until} min`;
+    badgeEl.className = 'nu-badge' + (best.until <= 20 ? ' soon' : '');
+  } else {
+    const hrs  = Math.floor(best.until / 60);
+    const mins = best.until % 60;
+    badgeStr = `${hrs}h${mins > 0 ? `${mins}m` : ''}`;
+    subStr   = `at ${fmtTime(best.time)} · in ${hrs}h${mins > 0 ? ` ${mins}m` : ''}`;
+    badgeEl.className = 'nu-badge';
+  }
+
+  badgeEl.textContent = badgeStr;
+  timeEl.textContent  = subStr;
+}
+
+// ============ GO ============
+render();
+refreshPreview();
+if (settings.backend && settings.token) cloudPull();
+
+// Auto-poll every 30s — silently pulls if cloud is newer (picks up WhatsApp-added items)
+async function cloudPollSilent() {
+  if (!settings.backend || !settings.token) return;
+  try {
+    const resp = await fetch(`${cloudUrl()}/sync`, {
+      headers: { 'Authorization': `Bearer ${settings.token}` },
+    });
+    if (!resp.ok) return;
+    const cloud = await resp.json();
+    if (!cloud?.updated_at) return;
+    // Only merge if cloud was updated more recently than our last push
+    if (lastLocalUpdate && cloud.updated_at <= lastLocalUpdate) return;
+    // Safe merge — never overwrites local items
+    saveLocalBackup();
+    const changed = mergeCloudIntoLocal(cloud);
+    // Always absorb fresh GCal events even if dashboard data didn't change
+    let gcalChanged = false;
+    if (cloud.googleCalendar?.events) {
+      gcalEvents = cloud.googleCalendar.events;
+      updateGcalStatus(true, gcalEvents.length);
+      gcalChanged = true;
+    }
+    if (changed || gcalChanged) {
+      if (changed) {
+        migrateUserData(userData);
+        lastLocalUpdate = new Date().toISOString();
+        localStorage.setItem(KEY_USER, JSON.stringify(userData));
+        localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
+        localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
+      }
+      render();
+      if (changed) {
+        cloudStatus(`Auto-synced at ${new Date().toLocaleTimeString()}`, 'ok');
+        cloudPush();
+      }
+    }
+  } catch { /* silent fail — offline */ }
+}
+if (settings.backend && settings.token) setInterval(cloudPollSilent, 10000);
+</script>
+
+</body>
+</html>
