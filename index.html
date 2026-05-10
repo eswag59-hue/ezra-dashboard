@@ -45,15 +45,22 @@
 
   header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 28px;
-    padding-bottom: 18px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--border);
   }
-  header .title { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
-  header .date { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+  header .title {
+    font-size: 26px; font-weight: 700;
+    letter-spacing: -0.025em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent-soft) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header .date { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
   header .progress { font-size: 12px; color: var(--text-dim); }
+  header .meta { display: flex; align-items: center; gap: 8px; }
 
   h2 {
     font-size: 11px;
@@ -146,7 +153,7 @@
   .today-panel {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; padding: 22px 24px;
-    margin-bottom: 24px; border-left: 3px solid var(--urgent);
+    margin-bottom: 20px; border-left: 3px solid var(--urgent);
   }
   .today-panel .today-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
   .today-panel .today-title { font-size: 17px; font-weight: 600; }
@@ -627,7 +634,209 @@
       width: auto;
     }
     .toast.show { transform: translateY(0); }
+
+    /* Wedding countdown — compact mobile */
+    .wedding-countdown {
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+    }
+    .wedding-countdown .wc-label { font-size: 9px; letter-spacing: 0.1em; }
+    .wedding-countdown .wc-days  { font-size: 40px; }
+    .wedding-countdown .wc-sub   { font-size: 13px; }
+    .wedding-countdown .wc-icon  { font-size: 30px; }
+
+    /* Next Up — tighter mobile */
+    .next-up {
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    .next-up .nu-icon  { width: 38px; height: 38px; font-size: 20px; border-radius: 9px; }
+    .next-up .nu-title { font-size: 14px; }
+    .next-up .nu-badge { font-size: 12px; padding: 4px 10px; }
+
+    /* Search bar — 16px prevents iOS zoom, bigger hit target */
+    .search-bar { margin-bottom: 14px; }
+    .search-bar input {
+      font-size: 16px;
+      min-height: 44px;
+      padding: 10px 14px;
+    }
+
+    /* Section h2 labels — more breathing room */
+    h2 { margin-bottom: 10px; }
+
+    /* Card: reduce padding further so content fits */
+    .card { padding: 14px 12px; }
+
+    /* Progress label in header — smaller */
+    header .progress { font-size: 11px; }
   }
+
+  /* === Card shadows (subtle depth) === */
+  .card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s ease;
+  }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08); }
+  .today-panel {
+    box-shadow: 0 2px 8px rgba(168,65,58,0.08), 0 4px 20px rgba(168,65,58,0.06);
+  }
+  .quick-add { box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05); }
+  .note-card { box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+
+  /* === Sync health badge === */
+  .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim);
+    display: inline-block; flex-shrink: 0; transition: background 0.3s;
+  }
+  .sync-dot.ok    { background: #22c55e; }
+  .sync-dot.busy  { background: #f59e0b; animation: pulse 1s infinite; }
+  .sync-dot.error { background: #ef4444; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* === Show-completed toggle === */
+  .toggle-done-btn {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 12px; font-size: 13px; color: var(--text-muted); cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .toggle-done-btn:hover { color: var(--text); border-color: var(--text-muted); }
+  body:not(.show-done) .task.done { display: none !important; }
+
+  /* === Search bar === */
+  .search-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 16px; padding: 0;
+  }
+  .search-bar input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text);
+    outline: none; transition: border-color .15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .search-bar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(30,39,53,0.08); }
+  .search-bar input::placeholder { color: var(--text-dim); }
+  .search-bar .clear-btn {
+    background: none; border: none; color: var(--text-dim); cursor: pointer;
+    font-size: 16px; padding: 4px 6px; border-radius: 4px; line-height: 1;
+    display: none;
+  }
+  .search-bar .clear-btn.visible { display: block; }
+  /* Tasks that don't match search are hidden */
+  .task[data-hidden-search] { display: none !important; }
+  /* Show "no results" label per card */
+  .card .search-empty {
+    font-size: 12px; color: var(--text-dim); font-style: italic; padding: 4px 0;
+    display: none;
+  }
+  .card.all-hidden .search-empty { display: block; }
+
+  /* === Wedding countdown banner === */
+  .wedding-countdown {
+    border-radius: 14px;
+    padding: 16px 22px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: linear-gradient(135deg, var(--accent) 0%, #2a3f5c 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(30,39,53,0.18);
+    position: relative;
+    overflow: hidden;
+  }
+  .wedding-countdown::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -20px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .wedding-countdown .wc-left {}
+  .wedding-countdown .wc-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.55;
+    margin-bottom: 4px;
+  }
+  .wedding-countdown .wc-days {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .wedding-countdown .wc-sub {
+    font-size: 12px;
+    opacity: 0.65;
+    margin-top: 4px;
+  }
+  .wedding-countdown .wc-icon {
+    font-size: 36px;
+    opacity: 0.3;
+    line-height: 1;
+    user-select: none;
+  }
+
+  /* === Next Up widget === */
+  .next-up {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 14px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+  }
+  .next-up:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.07); }
+  .next-up .nu-icon {
+    font-size: 22px; width: 40px; height: 40px;
+    background: var(--surface-soft); border: 1px solid var(--border-soft);
+    border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .next-up .nu-body { flex: 1; min-width: 0; }
+  .next-up .nu-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+  }
+  .next-up .nu-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .next-up .nu-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+  .next-up .nu-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: -0.01em;
+  }
+  .next-up .nu-badge.soon { background: var(--urgent); }
 </style>
 </head>
 <body>
@@ -639,12 +848,23 @@
   </div>
   <div class="meta">
     <div id="progress" class="progress"></div>
+    <button id="toggle-done-btn" class="toggle-done-btn" title="Toggle completed tasks">Show done</button>
     <button id="btn-refresh" title="Sync everything" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:13px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .15s,border-color .15s;">
+      <span class="sync-dot" id="sync-dot"></span>
       <span id="refresh-icon" style="display:inline-block;font-size:15px;line-height:1;">↻</span>
       <span id="refresh-label">Sync</span>
     </button>
   </div>
 </header>
+
+<div id="wedding-countdown" class="wedding-countdown" style="display:none">
+  <div class="wc-left">
+    <div class="wc-label">💍 Wedding Countdown</div>
+    <div class="wc-days" id="wc-days">—</div>
+    <div class="wc-sub" id="wc-sub"></div>
+  </div>
+  <div class="wc-icon">💍</div>
+</div>
 
 <div class="quick-add">
   <textarea id="qa-input" rows="2" placeholder="Add a task, event, or note... (try &quot;Call lighting Tuesday 3pm&quot; or &quot;Idea: ringo should support Spanish&quot;)"></textarea>
@@ -664,6 +884,21 @@
   <button class="add-btn" data-add="task">+ Task</button>
   <button class="add-btn" data-add="event">+ Event</button>
   <button class="add-btn" data-add="note">+ Note</button>
+</div>
+
+<div id="next-up" class="next-up" style="display:none">
+  <div class="nu-icon" id="nu-icon">📅</div>
+  <div class="nu-body">
+    <div class="nu-label">⚡ Next Up</div>
+    <div class="nu-title" id="nu-title"></div>
+    <div class="nu-time" id="nu-time"></div>
+  </div>
+  <div class="nu-badge" id="nu-badge"></div>
+</div>
+
+<div class="search-bar">
+  <input id="search-input" type="search" placeholder="🔍 Search tasks, events, notes…" autocomplete="off">
+  <button class="clear-btn" id="clear-search">✕</button>
 </div>
 
 <div class="today-panel">
@@ -814,10 +1049,7 @@ const defaultData = {
     { id: 'e3', date: '2026-05-07', time: '18:00', title: "Ben's wedding", note: 'Marina' },
     { id: 'e4', date: '2026-05-11', time: '09:00', title: 'Dentist', note: 'Bring $350' },
   ],
-  flexible: [
-    'Meet with music person',
-    'Meet with Noam Abe',
-  ],
+  flexible: [],
   datedTasks: [
     { id: 'dt1', date: '2026-05-08', text: 'Home Goods couch pillows + bed pillows' },
     { id: 'dt2', date: '2026-05-08', text: "Klaf's" },
@@ -1039,7 +1271,7 @@ function getData() {
     ...defaultData.notes.filter(n => !isDeleted(n.id)).map(applyEdit),
     ...userData.notes.filter(n => !isDeleted(n.id)).map(applyEdit),
   ];
-  return { events, flexible: defaultData.flexible, datedTasks, categories: cats, notes };
+  return { events, datedTasks, categories: cats, notes };
 }
 
 // Expand recurring events into concrete dated occurrences (180-day window).
@@ -1710,6 +1942,9 @@ function render() {
   renderNotes();
   renderProgress();
   renderDigest();
+  applySearchFilter();
+  renderWeddingCountdown();
+  renderNextUp();
 }
 
 function renderTask(t, opts={}) {
@@ -1718,6 +1953,8 @@ function renderTask(t, opts={}) {
     + (checks[t.id] ? ' done' : '')
     + (isUserAdded(t.id) ? ' user-added' : (isEdited(t.id) ? ' edited' : ''))
   });
+  // Store searchable text for real-time search filtering
+  wrap.dataset.searchText = ((t.text || '') + ' ' + (t.due || '') + ' ' + (t.note || '') + ' ' + (cat || '')).toLowerCase();
 
   const cb = el('input', { type: 'checkbox' });
   cb.id = 'cb-' + t.id + (cat ? '-' + cat : '') + (opts.suffix || '');
@@ -1934,7 +2171,10 @@ function renderDayDetail(date) {
 
 function renderFlex() {
   const fe = $('#flex-events');
+  if (!fe) return;
   fe.innerHTML = '';
+  if (!defaultData.flexible.length) { fe.style.display = 'none'; return; }
+  fe.style.display = '';
   defaultData.flexible.forEach(f => {
     fe.appendChild(el('div', { class: 'chip' }, el('strong', {}, 'This week: '), f));
   });
@@ -1950,6 +2190,8 @@ function renderCards() {
     const open = tasks.filter(t => !checks[t.id]).length;
     card.appendChild(el('h3', {}, cat, el('span', { class: 'count' }, `${open} of ${tasks.length}`)));
     tasks.forEach(t => card.appendChild(renderTask(t, { cat })));
+    // Placeholder shown when all tasks are hidden by search
+    card.appendChild(el('div', { class: 'search-empty' }, 'No matching tasks'));
     cards.appendChild(card);
   }
 }
@@ -2152,12 +2394,6 @@ function buildDigest() {
     lines.push('');
   }
 
-  if (data.flexible.length) {
-    lines.push('THIS WEEK (flexible)');
-    data.flexible.forEach(f => lines.push(`• ${f}`));
-    lines.push('');
-  }
-
   let openTotal = 0, total = 0;
   for (const tasks of Object.values(data.categories)) {
     for (const t of tasks) { total++; if (!checks[t.id]) openTotal++; }
@@ -2277,9 +2513,20 @@ $('#reset-all').addEventListener('click', () => {
 let cloudPushTimer = null;
 const cloudUrl = () => settings.backend ? settings.backend.replace(/\/$/, '') : '';
 
-function cloudStatus(msg) {
+function cloudStatus(msg, dotState) {
   const s = document.getElementById('cloud-status');
   if (s) s.textContent = msg;
+  // Update sync dot in header button
+  const dot = document.getElementById('sync-dot');
+  if (dot && dotState) { dot.className = 'sync-dot ' + dotState; }
+  // Also show short status in the refresh button label
+  const lbl = document.getElementById('refresh-label');
+  if (lbl) {
+    if (msg && msg.includes('Sync')) lbl.textContent = 'Syncing…';
+    else if (msg && msg.includes('Synced')) lbl.textContent = 'Synced';
+    else if (msg && (msg.includes('failed') || msg.includes('Offline'))) lbl.textContent = 'Error';
+    else lbl.textContent = 'Sync';
+  }
 }
 
 function cloudPushDebounced() {
@@ -2290,7 +2537,7 @@ function cloudPushDebounced() {
 
 async function cloudPush() {
   if (!settings.backend || !settings.token) return;
-  cloudStatus('Syncing...');
+  cloudStatus('Syncing...', 'busy');
   try {
     const resp = await fetch(`${cloudUrl()}/sync`, {
       method: 'POST',
@@ -2298,12 +2545,12 @@ async function cloudPush() {
       body: JSON.stringify({ userData, checks, updated_at: lastLocalUpdate }),
     });
     if (resp.ok) {
-      cloudStatus(`Synced at ${new Date().toLocaleTimeString()}`);
+      cloudStatus(`Synced at ${new Date().toLocaleTimeString()}`, 'ok');
     } else {
-      cloudStatus(`Push failed: ${resp.status} ${resp.statusText}`);
+      cloudStatus(`Push failed: ${resp.status} ${resp.statusText}`, 'error');
     }
   } catch (e) {
-    cloudStatus(`Offline (push): ${e.message}`);
+    cloudStatus(`Offline (push): ${e.message}`, 'error');
   }
 }
 
@@ -2445,15 +2692,15 @@ function restoreLocalBackup(slot) {
 
 async function cloudPull(force = false) {
   if (!settings.backend || !settings.token) return;
-  cloudStatus('Syncing with cloud...');
+  cloudStatus('Syncing with cloud...', 'busy');
   try {
     const resp = await fetch(`${cloudUrl()}/sync`, {
       headers: { 'Authorization': `Bearer ${settings.token}` },
     });
-    if (!resp.ok) { cloudStatus(`Pull failed: ${resp.status} ${resp.statusText}`); return; }
+    if (!resp.ok) { cloudStatus(`Pull failed: ${resp.status} ${resp.statusText}`, 'error'); return; }
     const cloud = await resp.json();
     if (!cloud || !cloud.updated_at) {
-      cloudStatus('Cloud is empty — pushing local data'); cloudPush(); return;
+      cloudStatus('Cloud is empty — pushing local data', 'busy'); cloudPush(); return;
     }
     // Always save a local backup before touching anything
     saveLocalBackup();
@@ -2472,10 +2719,10 @@ async function cloudPull(force = false) {
     localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
     render();
     const n = countItems(userData);
-    cloudStatus(`Synced — ${n} item${n !== 1 ? 's' : ''}`);
+    cloudStatus(`Synced — ${n} item${n !== 1 ? 's' : ''}`, 'ok');
     if (!force) cloudPush(); // push merged result so cloud is canonical
   } catch (e) {
-    cloudStatus(`Offline (pull): ${e.message}`);
+    cloudStatus(`Offline (pull): ${e.message}`, 'error');
   }
 }
 
@@ -2627,6 +2874,127 @@ document.querySelectorAll('.cal-tab').forEach(t => {
   });
 });
 
+// ============ SEARCH ============
+let searchQuery = '';
+function applySearchFilter() {
+  const q = searchQuery.trim().toLowerCase();
+  document.querySelectorAll('.card').forEach(card => {
+    let visibleCount = 0;
+    card.querySelectorAll('.task').forEach(taskEl => {
+      const text = (taskEl.dataset.searchText || '');
+      const matches = !q || text.includes(q);
+      if (matches) {
+        delete taskEl.dataset.hiddenSearch;
+        visibleCount++;
+      } else {
+        taskEl.dataset.hiddenSearch = '1';
+      }
+    });
+    card.classList.toggle('all-hidden', visibleCount === 0 && !!q);
+  });
+}
+
+document.getElementById('search-input')?.addEventListener('input', function() {
+  searchQuery = this.value;
+  const clearBtn = document.getElementById('clear-search');
+  if (clearBtn) clearBtn.classList.toggle('visible', !!this.value);
+  applySearchFilter();
+});
+document.getElementById('clear-search')?.addEventListener('click', function() {
+  const inp = document.getElementById('search-input');
+  if (inp) { inp.value = ''; searchQuery = ''; }
+  this.classList.remove('visible');
+  applySearchFilter();
+});
+
+// ============ SHOW COMPLETED TOGGLE ============
+document.getElementById('toggle-done-btn')?.addEventListener('click', function() {
+  const on = document.body.classList.toggle('show-done');
+  this.textContent = on ? 'Hide done' : 'Show done';
+  this.style.color = on ? 'var(--accent)' : '';
+  this.style.borderColor = on ? 'var(--accent)' : '';
+});
+
+// ============ WEDDING COUNTDOWN ============
+// Update WEDDING_DATE to match actual date once confirmed
+const WEDDING_DATE = '2026-06-02'; // Tuesday, June 2, 2026
+
+function renderWeddingCountdown() {
+  const wrap = document.getElementById('wedding-countdown');
+  const daysEl = document.getElementById('wc-days');
+  const subEl  = document.getElementById('wc-sub');
+  if (!wrap || !daysEl || !subEl) return;
+
+  const today   = new Date(TODAY + 'T12:00:00');
+  const wedding = new Date(WEDDING_DATE + 'T12:00:00');
+  const diffDays = Math.round((wedding - today) / 86400000);
+
+  if (diffDays < 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  if (diffDays === 0) {
+    daysEl.textContent = 'TODAY 🎉';
+    subEl.textContent  = 'Mazel tov! It\'s your wedding day.';
+  } else if (diffDays === 1) {
+    daysEl.textContent = '1 day';
+    subEl.textContent  = 'Tomorrow! Tonight is Shabbos Kallah.';
+  } else {
+    const wedding_d = wedding;
+    daysEl.textContent = `${diffDays} days`;
+    subEl.textContent  = `${fmtDowLong[wedding_d.getDay()]}, ${fmtMonthLong[wedding_d.getMonth()]} ${wedding_d.getDate()}`;
+  }
+}
+
+// ============ NEXT UP WIDGET ============
+function renderNextUp() {
+  const wrap    = document.getElementById('next-up');
+  const titleEl = document.getElementById('nu-title');
+  const timeEl  = document.getElementById('nu-time');
+  const badgeEl = document.getElementById('nu-badge');
+  const iconEl  = document.getElementById('nu-icon');
+  if (!wrap || !titleEl || !timeEl || !badgeEl) return;
+
+  const data = getData();
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  let best = null, bestUntil = Infinity;
+
+  // Scan today's events for the nearest upcoming one (within 8 hours)
+  for (const ev of data.events) {
+    if (ev.date !== TODAY || !ev.time || checks[ev.id]) continue;
+    const [h, m] = ev.time.split(':').map(Number);
+    const evMin  = h * 60 + m;
+    const until  = evMin - nowMin;
+    if (until > 0 && until <= 480 && until < bestUntil) {
+      bestUntil = until;
+      best = { kind: 'event', title: ev.title, time: ev.time, until };
+    }
+  }
+
+  if (!best) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  titleEl.textContent = best.title;
+  if (iconEl) iconEl.textContent = '📅';
+
+  let badgeStr, subStr;
+  if (best.until < 60) {
+    badgeStr = `${best.until}m`;
+    subStr   = `at ${fmtTime(best.time)} · in ${best.until} min`;
+    badgeEl.className = 'nu-badge' + (best.until <= 20 ? ' soon' : '');
+  } else {
+    const hrs  = Math.floor(best.until / 60);
+    const mins = best.until % 60;
+    badgeStr = `${hrs}h${mins > 0 ? `${mins}m` : ''}`;
+    subStr   = `at ${fmtTime(best.time)} · in ${hrs}h${mins > 0 ? ` ${mins}m` : ''}`;
+    badgeEl.className = 'nu-badge';
+  }
+
+  badgeEl.textContent = badgeStr;
+  timeEl.textContent  = subStr;
+}
+
 // ============ GO ============
 render();
 refreshPreview();
@@ -2654,12 +3022,12 @@ async function cloudPollSilent() {
       localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
       localStorage.setItem('ezra-dash-updated-at', JSON.stringify(lastLocalUpdate));
       render();
-      cloudStatus(`Auto-synced at ${new Date().toLocaleTimeString()}`);
+      cloudStatus(`Auto-synced at ${new Date().toLocaleTimeString()}`, 'ok');
       cloudPush();
     }
   } catch { /* silent fail — offline */ }
 }
-if (settings.backend && settings.token) setInterval(cloudPollSilent, 30000);
+if (settings.backend && settings.token) setInterval(cloudPollSilent, 10000);
 </script>
 
 </body>
